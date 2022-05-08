@@ -7,9 +7,12 @@
   "scripts": {
     "start": "ts-node-dev --respawn --transpile-only src/index.ts",
     "loadtest": "colyseus-loadtest loadtest/example.ts --room my_room --numClients 2",
-    "build": "npm run clean && tsc && node node_modules/copyfiles/copyfiles package.json ./lib && node node_modules/copyfiles/copyfiles arena.env ./lib",
-    "clean": "node node_modules/rimraf/bin lib",
-    "test": "mocha --require ts-node/register test/**_test.ts --exit --timeout 15000"
+    "build:server": "tsc && node node_modules/copyfiles/copyfiles package.json ./lib && node node_modules/copyfiles/copyfiles arena.env ./lib",
+    "build:client": "cd client && tsc && cd .. && node node_modules/copyfiles/copyfiles ./client/lib/* ./client/index.html ./lib",
+    "build": "yarn clean && yarn build:server && yarn build:client",
+    "clean": "node node_modules/rimraf/bin lib client/lib",
+    "test": "mocha --require ts-node/register test/**_test.ts --exit --timeout 15000",
+    "list": "tsc --listFiles"
   },
   "author": "",
   "license": "MIT",
@@ -24,7 +27,7 @@
     "rimraf": "^2.7.1",
     "ts-node": "^8.1.0",
     "ts-node-dev": "^1.0.0-pre.63",
-    "typescript": "^3.4.5"
+    "typescript": "^4.6.4"
   },
   "dependencies": {
     "@colyseus/arena": "^0.14.22",

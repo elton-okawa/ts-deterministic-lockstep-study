@@ -1,5 +1,6 @@
 import Arena from "@colyseus/arena";
 import { monitor } from "@colyseus/monitor";
+import express from 'express';
 
 /**
  * Import your Room files
@@ -7,13 +8,13 @@ import { monitor } from "@colyseus/monitor";
 import { GameRoom } from "./rooms/GameRoom";
 
 export default Arena({
-    getId: () => "Your Colyseus App",
+    getId: () => "Game Network Study",
 
     initializeGameServer: (gameServer) => {
         /**
          * Define your room handlers:
          */
-        gameServer.define('my_room', GameRoom);
+        gameServer.define('game_room', GameRoom);
 
     },
 
@@ -31,6 +32,7 @@ export default Arena({
          * Read more: https://docs.colyseus.io/tools/monitor/
          */
         app.use("/colyseus", monitor());
+        app.use("/client", express.static('lib/client'))
     },
 
 
