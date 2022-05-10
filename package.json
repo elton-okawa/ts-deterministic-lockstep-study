@@ -8,10 +8,11 @@
     "start": "ts-node-dev --respawn --transpile-only src/index.ts",
     "loadtest": "colyseus-loadtest loadtest/example.ts --room my_room --numClients 2",
     "build:server": "tsc && node node_modules/copyfiles/copyfiles package.json ./lib && node node_modules/copyfiles/copyfiles arena.env ./lib",
-    "build:client": "cd client && tsc && cd .. && node node_modules/copyfiles/copyfiles ./client/lib/* ./client/index.html ./lib",
+    "build:client": "cd client && tsc && cd .. && node node_modules/copyfiles/copyfiles --error ./client/lib/**/* ./client/static/**/* ./client/index.html ./lib",
     "build": "yarn clean && yarn build:server && yarn build:client",
     "clean": "node node_modules/rimraf/bin lib client/lib",
     "test": "mocha --require ts-node/register test/**_test.ts --exit --timeout 15000",
+    "schema-codegen": "schema-codegen src/rooms/schema/* --ts --output ./client/typing",
     "list": "tsc --listFiles"
   },
   "author": "",
