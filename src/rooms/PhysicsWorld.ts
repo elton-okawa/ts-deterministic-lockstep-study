@@ -27,9 +27,9 @@ export class PhysicsWorld {
   }
 
   init() {
-    const boxA = Bodies.rectangle(400, 200, 80, 80);
-    const boxB = Bodies.rectangle(450, 50, 80, 80);
-    const ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+    const boxA = Bodies.rectangle(0, 0, 50, 50);
+    const boxB = Bodies.rectangle(590, 0, 50, 50);
+    const ground = Bodies.rectangle(320, 300, 700, 60, { isStatic: true });
 
     this.staticBodies.push(ground);
     this.bodies.push(boxA, boxB);
