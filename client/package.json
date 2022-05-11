@@ -1,0 +1,48 @@
+{
+  "private": true,
+  "name": "client",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "module": "lib/index.min.mjs",
+  "unpkg": "lib/index.umd.min.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "watch": "nodemon --exec \"yarn bundle:dev\"",
+    "copy": "node ./node_modules/copyfiles/copyfiles --error \"./lib/**/*\" \"./static/**/*\" \"./index.html\" \"../lib/client/\"",
+    "bundle:dev": "yarn clean && tsc && yarn bundle:esm && yarn copy",
+    "bundle": "yarn clean && tsc && yarn bundle:esm && yarn bundle:esm:min && yarn bundle:umd && yarn bundle:umd:min && yarn build:stats",
+    "build:stats": "(echo '\\033[35;3m' ; cd lib && ls -lh index*js index*gz | tail -n +2 | awk '{print $5,$9}')",
+    "bundle:esm": "rollup lib/index.js --file lib/index.mjs --format esm",
+    "bundle:esm:min": "terser --ecma 6 --compress --mangle --module -o lib/index.min.mjs -- lib/index.mjs && gzip -9 -c lib/index.min.mjs > lib/index.min.mjs.gz",
+    "bundle:umd": "rollup lib/index.js --file lib/index.umd.js --format umd --name sayHello",
+    "bundle:umd:min": "terser --ecma 6 --compress --mangle -o lib/index.umd.min.js -- lib/index.umd.js && gzip -9 -c lib/index.umd.min.js > lib/index.umd.min.js.gz",
+    "clean": "node node_modules/rimraf/bin lib",
+    "list": "tsc --listFiles"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/pixi.js": "^5.0.0",
+    "copyfiles": "^2.4.1",
+    "nodemon": "^2.0.16",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.72.1",
+    "terser": "^5.13.1",
+    "typescript": "^4.6.4"
+  },
+  "dependencies": {},
+  "nodemonConfig": {
+    "verbose": true,
+    "ext": "ts,html,json",
+    "delay": 2000,
+    "ignore": [
+      "node_modules/**/*",
+      "lib/**/*"
+    ],
+    "watch": [
+      "scripts/**/*",
+      "index.html",
+      "index.ts"
+    ]
+  }
+}
