@@ -1,6 +1,4 @@
-import Colyseus from "../typing/colyseus";
 import { GameRoomState } from "../typing/GameRoomState";
-import PIXI from "../typing/pixi";
 
 const client = new Colyseus.Client('ws://localhost:2567');
 
