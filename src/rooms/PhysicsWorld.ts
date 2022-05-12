@@ -1,3 +1,5 @@
+import RAPIER from 'rapier2d-node';
+
 import { Engine, Bodies, Body, Composite, Runner } from 'matter-js';
 
 export interface BodyInfo {
@@ -18,6 +20,8 @@ export class PhysicsWorld {
   bodies: Body[];
 
   constructor() {
+    console.log(RAPIER.version());
+
     this.engine = Engine.create();
 
     this.staticBodies = [];
