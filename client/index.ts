@@ -1,5 +1,5 @@
 //@ts-ignore
-import RAPIER from 'https://cdn.skypack.dev/@dimforge/rapier2d-compat';
+import RAPIER from 'https://cdn.skypack.dev/@dimforge/rapier2d-compat@0.7.6';
 RAPIER.init().then(() => {
   // Use the RAPIER module here.
   let gravity = { x: 0.0, y: -9.81 };

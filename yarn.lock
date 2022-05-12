@@ -1424,6 +1424,11 @@ range-parser@~1.2.1:
   resolved "https://registry.yarnpkg.com/range-parser/-/range-parser-1.2.1.tgz#3cf37023d199e1c24d1a55b84800c2f3e6468031"
   integrity sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==
 
+rapier2d-node@^0.7.7:
+  version "0.7.7"
+  resolved "https://registry.yarnpkg.com/rapier2d-node/-/rapier2d-node-0.7.7.tgz#5651c038e36a6489f990f822b65c1e049dce2579"
+  integrity sha512-mu0PXPSPsg2qyluWAbhsxTZwaQCkWsL0EnzOmMYyxmkAuPDT+AqWjfJ6A+QajJPnB1IYBEv+dViSU3wfZkgsCA==
+
 raw-body@2.5.1:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/raw-body/-/raw-body-2.5.1.tgz#fe1b1628b181b700215e5fd42389f98b71392857"
@@ -1825,6 +1830,11 @@ tsconfig@^7.0.0:
     "@types/strip-json-comments" "0.0.30"
     strip-bom "^3.0.0"
     strip-json-comments "^2.0.0"
+
+tsimportlib@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/tsimportlib/-/tsimportlib-0.0.3.tgz#008453c0f0eea6f736f2a4431171de240b21fc0d"
+  integrity sha512-U9sW2/3D0P4IVRnhH2RCqjCP0sG66qvb4ahB0aQln5xGMphDjntz5rdk0rFZ6Fg+lW3L+i+gRnIl4VvNBvxiQw==
 
 tslib@^1.9.0:
   version "1.14.1"

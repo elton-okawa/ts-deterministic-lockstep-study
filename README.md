@@ -25,6 +25,19 @@ Try
 - Client prediction + Server Reconciliation + Entity Interpolation
 - Client in the present?
 
+## Lockstep
+- Client join
+- `onJoin` server sends message with current state and physics tick
+- `onJoin` server adds client input ring buffer to the synchronized state
+- Client setup world and start simulating
+
+- Client send message with input of physics tick + 3
+- Server receive and store it on the state
+- Server update state
+- Client receive state and verify if the current tick is >= received tick
+- If true it'll compare to the predicted tick and rollback if necessary
+- If false it'll continue normally
+
 ## License
 
 MIT
