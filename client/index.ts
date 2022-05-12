@@ -30,7 +30,7 @@ RAPIER.init().then(() => {
     setTimeout(gameLoop, 16);
   };
 
-  gameLoop();
+  // gameLoop();
 });
 
 import { GameRoomState } from "./typing/GameRoomState";
