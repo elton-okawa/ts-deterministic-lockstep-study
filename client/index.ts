@@ -16,16 +16,28 @@ function connect() {
   client.joinOrCreate<GameRoomState>('game_room').then(room => {
     console.log(room.sessionId, 'joined', room.name);
 
-    app = new Application(640, 360);
-    world = new PhysicsWorld();
-    lastUpdate = Date.now();
-    setInterval(update, 16.67);
+    setup();
 
     room.onStateChange(state => {
       currentState = state;
     });
   }).catch(e => {
       console.log('JOIN ERROR', e);
+  });
+}
+
+function setup() {
+  app = new Application(640, 360);
+  world = new PhysicsWorld();
+  lastUpdate = Date.now();
+  setInterval(update, 16.67);
+
+  document.addEventListener('keydown', (event: KeyboardEvent) => {
+    console.log(`keydown: ${event.key}`);
+  });
+
+  document.addEventListener('keyup', (event: KeyboardEvent) => {
+    console.log(`keyup: ${event.key}`);
   });
 }
 
