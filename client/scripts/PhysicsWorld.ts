@@ -1,17 +1,10 @@
-import RAPIER from 'rapier2d-node';
+//@ts-ignore
+import rapier from 'https://cdn.skypack.dev/@dimforge/rapier2d-compat@0.7.6';
+rapier.init();
 
-export interface StaticBodyInfo {
-  id: number;
-  position: Vector;
-}
+const RAPIER = rapier as typeof RapierType;
 
-export interface BodyInfo extends StaticBodyInfo {
-}
-
-export interface Vector {
-  x: number;
-  y: number;
-}
+import { GameObject } from './GameObject';
 
 const PHYSICS_TO_PIXEL_SCALE = 100;
 
@@ -58,11 +51,11 @@ export class PhysicsWorld {
     // console.log("Rigid-body position: ", position.x, position.y);
   }
 
-  get staticInfo(): StaticBodyInfo[] {
+  get staticInfo(): GameObject[] {
     return this.static.map(this._mapStaticBody);
   }
 
-  get bodyInfo(): BodyInfo[] {
+  get bodyInfo(): GameObject[] {
     return this.bodies.map(body => {
       const staticInfo = this._mapStaticBody(body);
       return {
@@ -71,13 +64,17 @@ export class PhysicsWorld {
     });
   }
 
-  _mapStaticBody(body: (RAPIER.RigidBody|RAPIER.Collider)): StaticBodyInfo {
+  _mapStaticBody(body: RAPIER.RigidBody | RAPIER.Collider): GameObject {
     const pos = body.translation();
     return {
       id: body.handle,
       position: {
         x: pos.x * PHYSICS_TO_PIXEL_SCALE,
         y: pos.y * PHYSICS_TO_PIXEL_SCALE,
+      },
+      size: {
+        x: 50,
+        y: 50,
       },
     }
   }

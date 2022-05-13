@@ -1,10 +1,10 @@
-import { GameObjectSchema } from "../typing/GameObjectSchema";
+import { GameObject } from "./GameObject";
 
 export class Application {
 
   _app: PIXI.Application;
   _sprites: { [id: string]: PIXI.Sprite } = {};
-  _gameObjects: GameObjectSchema[];
+  _gameObjects: GameObject[] = [];
 
   constructor(width, height) {
     const app = new PIXI.Application({ width, height });
@@ -14,11 +14,11 @@ export class Application {
     this._app = app;
   }
 
-  set gameObjects(objects: GameObjectSchema[]){ 
+  set gameObjects(objects: GameObject[]){ 
     this._gameObjects = objects;
   }
 
-  _ensureSprite(gameObject: GameObjectSchema) {
+  _ensureSprite(gameObject: GameObject) {
     if (!(gameObject.id in this._sprites)) {
       const sprite = PIXI.Sprite.from('./static/happy-face.png');
       sprite.width = 50;
@@ -28,13 +28,13 @@ export class Application {
     }
   }
 
-  _renderGameObject(gameObject: GameObjectSchema) {
+  _renderGameObject(gameObject: GameObject) {
     this._ensureSprite(gameObject);
 
     this._sprites[gameObject.id].position.set(gameObject.position.x, gameObject.position.y);
   }
 
-  render(delta) {
+  render() {
     this._gameObjects.forEach(obj => this._renderGameObject(obj));
   }
 }
