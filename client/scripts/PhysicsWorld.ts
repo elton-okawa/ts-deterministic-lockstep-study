@@ -17,7 +17,7 @@ export class PhysicsWorld {
   constructor() {
     console.log(`Using rapierjs version: ${RAPIER.version()}`);
 
-    const gravity = { x: 0.0, y: -9.81 };
+    const gravity = { x: 0.0, y: 9.81 };
     this.world = new RAPIER.World(gravity);
 
     this.init();
@@ -26,12 +26,12 @@ export class PhysicsWorld {
   init() {
     // Create the ground
     const groundColliderDesc = new RAPIER.ColliderDesc(new RAPIER.Cuboid(5, 0.3))
-      .setTranslation(3, 0);
+      .setTranslation(3, 3.3);
     const ground = this.world.createCollider(groundColliderDesc);
     this.static.push(ground);
 
     // Create a dynamic rigid-body.
-    const rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(0.0, 1.0);
+    const rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(0.0, 0.0);
     const rigidBody = this.world.createRigidBody(rigidBodyDesc);
 
     // Create a cuboid collider attached to the dynamic rigidBody.
