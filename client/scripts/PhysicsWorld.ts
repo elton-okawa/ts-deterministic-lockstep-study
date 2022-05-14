@@ -1,6 +1,5 @@
 //@ts-ignore
 import rapier from 'https://cdn.skypack.dev/@dimforge/rapier2d-compat@0.7.6';
-import { RawPhysicsPipeline } from 'rapier2d-node/dist/rapier_wasm2d';
 rapier.init();
 
 const RAPIER = rapier as typeof RapierType;
@@ -19,6 +18,9 @@ export class PhysicsWorld {
   bodies: RAPIER.RigidBody[] = [];
   players: { [key: string]: RAPIER.RigidBody } = {};
 
+  staticObjs: { [key: string]: GameObject } = {};
+  bodyObjs: { [key: string]: GameObject } = {};
+
   constructor() {
     console.log(`Using rapierjs version: ${RAPIER.version()}`);
 
@@ -28,22 +30,33 @@ export class PhysicsWorld {
     this.init();
   }
 
-  init() {
-    // Create the ground
-    const groundColliderDesc = new RAPIER.ColliderDesc(new RAPIER.Cuboid(5, 0.3))
-      .setTranslation(3, 3.3);
-    const ground = this.world.createCollider(groundColliderDesc);
-    this.static.push(ground);
+  get staticInfo(): GameObject[] {
+    return Object.values(this.staticObjs);
+  }
 
-    // Create a dynamic rigid-body.
-    const rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(1.0, 0.0);
-    const rigidBody = this.world.createRigidBody(rigidBodyDesc);
+  get bodyInfo(): GameObject[] {
+    [...this.bodies, ...Object.values(this.players)].map(body => {
+      // all bodies has a single collider
+      const collider = this.world.getCollider(body.collider(0));
+      this.mutateColliderToGameObject(collider, this.bodyObjs[collider.handle]);
+    });
+
+    return Object.values(this.bodyObjs);
+  }
+
+  init() {
+    this.setupWalls();
+    const rigidBody = this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.newDynamic().setTranslation(1.0, 0.0)
+    );
 
     // Create a cuboid collider attached to the dynamic rigidBody.
     const colliderDesc = RAPIER.ColliderDesc.cuboid(0.25, 0.25);
-    this.world.createCollider(colliderDesc, rigidBody.handle);
+    const collider = this.world.createCollider(colliderDesc, rigidBody.handle);
 
     this.bodies.push(rigidBody);
+    this.bodyObjs[collider.handle] = new GameObject();
+    this.mutateColliderToGameObject(collider, this.bodyObjs[collider.handle]);
   }
 
   start() {}
@@ -59,9 +72,11 @@ export class PhysicsWorld {
 
     const colliderDesc = RAPIER.ColliderDesc
       .cuboid(size.x / (PHYSICS_SCALE * 2), size.y / (PHYSICS_SCALE * 2));
-    this.world.createCollider(colliderDesc, body.handle);
+    const collider = this.world.createCollider(colliderDesc, body.handle);
 
     this.players[id] = body;
+    this.bodyObjs[collider.handle] = new GameObject();
+    this.mutateColliderToGameObject(collider, this.bodyObjs[collider.handle]);
   } 
 
   applyInput(id: string, input: Input) {
@@ -96,32 +111,39 @@ export class PhysicsWorld {
     return { x: x * FORCE_MULTIPLIER, y: y * FORCE_MULTIPLIER };
   }
 
-  get staticInfo(): GameObject[] {
-    return this.static.map(this._mapStaticBody);
-  }
+  private setupWalls() {
+    // Create the ground
+    const ground = this.world.createCollider(
+      new RAPIER.ColliderDesc(new RAPIER.Cuboid(2.5, 0.3)).setTranslation(2.5, 3.3)
+    );
+    const roof = this.world.createCollider(
+      new RAPIER.ColliderDesc(new RAPIER.Cuboid(1, 0.3)).setTranslation(3, 0.3),
+    );
 
-  // TODO we should not create everytime
-  get bodyInfo(): GameObject[] {
-    return [...this.bodies, ...Object.values(this.players)].map(body => {
-      const staticInfo = this._mapStaticBody(body);
-      return {
-        ...staticInfo,
-      }
+    const leftWall = this.world.createCollider(
+      new RAPIER.ColliderDesc(new RAPIER.Cuboid(0.3, 4)).setTranslation(0.3, 2),
+    );
+    const rightWall = this.world.createCollider(
+      new RAPIER.ColliderDesc(new RAPIER.Cuboid(0.3, 4)).setTranslation(5.7, 2),
+    );
+
+    this.static.push(ground, leftWall, rightWall, roof);
+
+    this.static.forEach(st => {
+      this.staticObjs[st.handle] = new GameObject();
+      this.mutateColliderToGameObject(st, this.staticObjs[st.handle]);
     });
   }
 
-  _mapStaticBody(body: RAPIER.RigidBody | RAPIER.Collider): GameObject {
-    const pos = body.translation();
-    return {
-      id: body.handle,
-      position: {
-        x: pos.x * PHYSICS_SCALE,
-        y: pos.y * PHYSICS_SCALE,
-      },
-      size: {
-        x: 50,
-        y: 50,
-      },
-    }
+  private mutateColliderToGameObject(collider: RAPIER.Collider, target: GameObject) {
+    const pos = collider.translation();
+    const halfSize = collider.halfExtents();
+
+    target.id = collider.handle;
+    target.position.x = pos.x * PHYSICS_SCALE;
+    target.position.y = pos.y * PHYSICS_SCALE;
+    target.rotation = collider.rotation();
+    target.size.x = halfSize.x * 2 * PHYSICS_SCALE;
+    target.size.y = halfSize.y * 2 * PHYSICS_SCALE;
   }
 }
