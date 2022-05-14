@@ -50,6 +50,7 @@ export class GameRoom extends Room<GameRoomState> {
 
   private setupMessageHandlers() {
     this.onMessage('input', (client, input: InputMessage) => {
+      // TODO block input with old frame, client send real frame instead of delayed
       this.state.players.get(client.id).setInput(input);
     });
   }
