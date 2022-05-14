@@ -12,6 +12,7 @@ export interface RawInput {
 }
 
 export class InputBuffer {
+  static SIZE = STATIC_DELAY + ROLLBACK_FRAMES;
 
   inputs: Input[];
 

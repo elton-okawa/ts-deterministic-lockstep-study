@@ -15,7 +15,7 @@ let timeSinceLastUpdate = 0;
 let lastUpdate;
 let currentInput: RawInput;
 let playerId: string;
-let playerInput: InputBuffer;
+let playerInputs: InputBuffer;
 let frame;
 
 let updateTimer: NodeJS.Timer;
@@ -51,9 +51,9 @@ function setup(id: string) {
 
   playerId = id;
   frame = 0;
-  playerInput = new InputBuffer();
+  playerInputs = new InputBuffer();
   world = new PhysicsWorld();
-  world.addPlayer(playerId, { x: 150, y: 0 }, { x: 50, y: 50 });
+  world.addPlayer(playerId, { x: 150, y: 0 });
 
   lastUpdate = Date.now();
   updateTimer = setInterval(update, 16.67);
@@ -97,11 +97,14 @@ function update() {
   while (timeSinceLastUpdate >= FIXED_DELTA) {
     timeSinceLastUpdate -= FIXED_DELTA;
 
-    // verify state and add players in the world if it does not exist
+    // TODO enable this after setup initial state sync
+    // currentState.players.forEach(player => {
+    //   world.applyInput(player.id, player.inputBuffer[frame % InputBuffer.SIZE]);
+    // });
 
-    playerInput.setInput(frame, currentInput);
+    playerInputs.setInput(frame, currentInput);
     room.send('input', { frame, ...currentInput });
-    world.applyInput(playerId, playerInput.getInput(frame));
+    world.applyInput(playerId, playerInputs.getInput(frame));
     world.update();
 
     frame += 1;

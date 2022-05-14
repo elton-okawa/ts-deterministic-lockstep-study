@@ -10,6 +10,7 @@ import { Input } from './Input';
 const PHYSICS_SCALE = 100;
 const FORCE_MULTIPLIER = 20;
 const MAX_HORIZONTAL_SPEED = 2;
+const PLAYER_SIZE = { x: 50, y: 50 };
 
 export class PhysicsWorld {
 
@@ -65,19 +66,23 @@ export class PhysicsWorld {
     this.world.step();
   }
 
-  addPlayer(id: string, position: Vector, size: Vector) {
+  addPlayer(id: string, position: Vector) {
     const bodyDesc = RAPIER.RigidBodyDesc.newDynamic()
       .setTranslation(position.x / PHYSICS_SCALE, position.y / PHYSICS_SCALE);
     const body = this.world.createRigidBody(bodyDesc);
 
     const colliderDesc = RAPIER.ColliderDesc
-      .cuboid(size.x / (PHYSICS_SCALE * 2), size.y / (PHYSICS_SCALE * 2));
+      .cuboid(PLAYER_SIZE.x / (PHYSICS_SCALE * 2), PLAYER_SIZE.y / (PHYSICS_SCALE * 2));
     const collider = this.world.createCollider(colliderDesc, body.handle);
 
     this.players[id] = body;
     this.bodyObjs[collider.handle] = new GameObject();
     this.mutateColliderToGameObject(collider, this.bodyObjs[collider.handle]);
   } 
+
+  hasPlayer(id: string): boolean {
+    return id in this.players;
+  }
 
   applyInput(id: string, input: Input) {
     const player = this.players[id];
