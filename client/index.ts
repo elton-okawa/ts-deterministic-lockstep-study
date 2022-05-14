@@ -26,6 +26,7 @@ function connect() {
     room = gameRoom;
     setup(gameRoom.sessionId);
 
+    // TODO perform static sync using gameRoom.state
     gameRoom.onStateChange(state => {
       // TODO compare state to rollback
       currentState = state;
@@ -95,6 +96,8 @@ function update() {
   timeSinceLastUpdate += now - lastUpdate;
   while (timeSinceLastUpdate >= FIXED_DELTA) {
     timeSinceLastUpdate -= FIXED_DELTA;
+
+    // verify state and add players in the world if it does not exist
 
     playerInput.setInput(frame, currentInput);
     room.send('input', { frame, ...currentInput });
