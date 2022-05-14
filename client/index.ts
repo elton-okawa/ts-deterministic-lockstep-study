@@ -38,7 +38,7 @@ function setup(id: string) {
   frame = 0;
   playerInput = new InputBuffer();
   world = new PhysicsWorld();
-  world.addPlayer(playerId, { x: 300, y: 0 }, { x: 50, y: 50 });
+  world.addPlayer(playerId, { x: 150, y: 0 }, { x: 50, y: 50 });
 
   lastUpdate = Date.now();
   setInterval(update, 16.67);

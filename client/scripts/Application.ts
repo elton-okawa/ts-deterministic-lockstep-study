@@ -21,8 +21,10 @@ export class Application {
   _ensureSprite(gameObject: GameObject) {
     if (!(gameObject.id in this._sprites)) {
       const sprite = PIXI.Sprite.from('./static/happy-face.png');
-      sprite.width = 50;
-      sprite.height = 50;
+      sprite.anchor.set(0.5, 0.5);
+      sprite.width = gameObject.size.x;
+      sprite.height = gameObject.size.y;
+      sprite.rotation = gameObject.rotation;
       this._sprites[gameObject.id] = sprite;
       this._app.stage.addChild(sprite);
     }
