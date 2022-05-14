@@ -1,4 +1,5 @@
-import { Input } from "./Input";
+import { Schema, ArraySchema, type } from "@colyseus/schema";
+import { InputSchema } from "./InputSchema";
 
 const STATIC_DELAY = 3;
 const ROLLBACK_FRAMES = 7;
@@ -11,13 +12,15 @@ export interface RawInput {
   jump: boolean;
 }
 
-export class InputBuffer {
-  static SIZE = STATIC_DELAY + ROLLBACK_FRAMES;
-
-  inputs: Input[];
+export class InputBufferSchema extends Schema {
+  @type([ InputSchema ]) inputs;
 
   constructor() {
-    this.inputs = Array.from({ length: STATIC_DELAY + ROLLBACK_FRAMES }, () => new Input());
+    super();
+    this.inputs = new ArraySchema<InputSchema>(...Array.from(
+      { length: STATIC_DELAY + ROLLBACK_FRAMES },
+      () => new InputSchema(),
+    ));
   }
 
   setInput(frame: number, rawInput: RawInput) {
@@ -31,7 +34,7 @@ export class InputBuffer {
     input.jump = rawInput.jump;
   }
 
-  getInput(frame: number): Input {
+  getInput(frame: number): InputSchema {
     return this.inputs[frame % this.inputs.length];
   }
 }

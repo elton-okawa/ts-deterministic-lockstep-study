@@ -6,9 +6,9 @@
 // 
 
 import { Schema, type, ArraySchema, MapSchema, SetSchema, DataChange } from '@colyseus/schema';
+import { InputBufferSchema } from './InputBufferSchema'
 
-
-export class VectorSchema extends Schema {
-    @type("number") public x!: number;
-    @type("number") public y!: number;
+export class PlayerSchema extends Schema {
+    @type("string") public id!: string;
+    @type(InputBufferSchema) public inputBuffer: InputBufferSchema = new InputBufferSchema();
 }

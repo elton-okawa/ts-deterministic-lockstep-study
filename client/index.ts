@@ -1,9 +1,10 @@
-import { GameRoomState } from "./typing/GameRoomState";
+import { GameRoomState } from "./generated/GameRoomState";
 import { Application } from './scripts/Application';
 import { PhysicsWorld } from "./scripts/PhysicsWorld";
 import { InputBuffer, RawInput } from "./scripts/InputBuffer";
 
 const client = new Colyseus.Client('ws://localhost:2567');
+let room;
 
 const FIXED_DELTA = 33.33;
 
@@ -14,17 +15,31 @@ let timeSinceLastUpdate = 0;
 let lastUpdate;
 let currentInput: RawInput;
 let playerId: string;
-let playerInput: InputBuffer;
+let playerInputs: InputBuffer;
 let frame;
 
+let updateTimer: NodeJS.Timer;
+
 function connect() {
-  client.joinOrCreate<GameRoomState>('game_room').then(room => {
-    console.log(room.sessionId, 'joined', room.name);
+  client.joinOrCreate<GameRoomState>('game_room').then(gameRoom => {
+    console.log(gameRoom.sessionId, 'joined', gameRoom.name);
+    room = gameRoom;
+    setup(gameRoom.sessionId);
 
-    setup(room.sessionId);
-
-    room.onStateChange(state => {
+    // TODO perform static sync using gameRoom.state
+    gameRoom.onStateChange(state => {
+      // TODO compare state to rollback
       currentState = state;
+    });
+
+    gameRoom.onError((code: number, message: string) => {
+      console.log(`Error code '${code}': '${message}'`);
+      clearInterval(updateTimer);
+    });
+
+    gameRoom.onLeave((code: number) => {
+      console.log(`Leave code '${code}'`);
+      clearInterval(updateTimer);
     });
   }).catch(e => {
       console.log('JOIN ERROR', e);
@@ -36,12 +51,12 @@ function setup(id: string) {
 
   playerId = id;
   frame = 0;
-  playerInput = new InputBuffer();
+  playerInputs = new InputBuffer();
   world = new PhysicsWorld();
-  world.addPlayer(playerId, { x: 150, y: 0 }, { x: 50, y: 50 });
+  world.addPlayer(playerId, { x: 150, y: 0 });
 
   lastUpdate = Date.now();
-  setInterval(update, 16.67);
+  updateTimer = setInterval(update, 16.67);
   currentInput = {
     up: false,
     down: false,
@@ -71,7 +86,7 @@ function handleKey(key: string, pressed: boolean) {
       currentInput.right = pressed;
       break;
     case ' ':
-      currentInput.jump= pressed;
+      currentInput.jump = pressed;
       break;
   }
 }
@@ -82,8 +97,14 @@ function update() {
   while (timeSinceLastUpdate >= FIXED_DELTA) {
     timeSinceLastUpdate -= FIXED_DELTA;
 
-    playerInput.setInput(frame, currentInput);
-    world.applyInput(playerId, playerInput.getInput(frame));
+    // TODO enable this after setup initial state sync
+    // currentState.players.forEach(player => {
+    //   world.applyInput(player.id, player.inputBuffer[frame % InputBuffer.SIZE]);
+    // });
+
+    playerInputs.setInput(frame, currentInput);
+    room.send('input', { frame, ...currentInput });
+    world.applyInput(playerId, playerInputs.getInput(frame));
     world.update();
 
     frame += 1;
