@@ -9,7 +9,8 @@ import { GameObject, Vector } from './GameObject';
 import { Input } from './Input';
 
 const PHYSICS_SCALE = 100;
-const SPEED = 1;
+const FORCE_MULTIPLIER = 20;
+const MAX_HORIZONTAL_SPEED = 2;
 
 export class PhysicsWorld {
 
@@ -21,7 +22,7 @@ export class PhysicsWorld {
   constructor() {
     console.log(`Using rapierjs version: ${RAPIER.version()}`);
 
-    const gravity = { x: 0.0, y: 9.81 };
+    const gravity = { x: 0.0, y: 20 };
     this.world = new RAPIER.World(gravity);
 
     this.init();
@@ -35,11 +36,11 @@ export class PhysicsWorld {
     this.static.push(ground);
 
     // Create a dynamic rigid-body.
-    const rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(0.0, 0.0);
+    const rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(1.0, 0.0);
     const rigidBody = this.world.createRigidBody(rigidBodyDesc);
 
     // Create a cuboid collider attached to the dynamic rigidBody.
-    const colliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 0.5);
+    const colliderDesc = RAPIER.ColliderDesc.cuboid(0.25, 0.25);
     this.world.createCollider(colliderDesc, rigidBody.handle);
 
     this.bodies.push(rigidBody);
@@ -57,28 +58,42 @@ export class PhysicsWorld {
     const body = this.world.createRigidBody(bodyDesc);
 
     const colliderDesc = RAPIER.ColliderDesc
-      .cuboid(size.x / PHYSICS_SCALE, size.y / PHYSICS_SCALE);
+      .cuboid(size.x / (PHYSICS_SCALE * 2), size.y / (PHYSICS_SCALE * 2));
     this.world.createCollider(colliderDesc, body.handle);
 
     this.players[id] = body;
   } 
 
   applyInput(id: string, input: Input) {
-    this.players[id].setLinvel(this._inputToVelocity(input), true);
+    const player = this.players[id];
+    // TODO maybe we should use setLinvel directly but adding gravity velocity
+    player.setLinvel(this.limitVelocity(player.linvel()), true);
+    player.applyForce(this.inputToVector(input), true);
   }
 
-  _inputToVelocity(input: Input): RAPIER.Vector {
+  private limitVelocity(vel: RAPIER.Vector) {
+    const signX = vel.x > 0 ? 1 : -1;
+    // const signY = vel.y > 0 ? 1 : -1;
+
+    return {
+      x: Math.min(Math.abs(vel.x), MAX_HORIZONTAL_SPEED) * signX,
+      y: vel.y,
+    };
+  }
+
+  private inputToVector(input: Input): RAPIER.Vector {
     let x = 0;
     let y = 0;
 
-    if (input.up) y += 1;
-    if (input.down) y -= 1;
+    // if (input.up) y += 1;
+    // if (input.down) y -= 1;
+    if (input.jump) y += 1; // TODO check grounded before jump
     if (input.left) x -= 1;
     if (input.right) x += 1;
 
     // invert y because positive is down in physics coordinate system
     y = -y;
-    return { x: x * SPEED, y: y * SPEED };
+    return { x: x * FORCE_MULTIPLIER, y: y * FORCE_MULTIPLIER };
   }
 
   get staticInfo(): GameObject[] {
