@@ -37,13 +37,16 @@ export class Application {
     this._sprites[gameObject.id].position.set(gameObject.position.x, gameObject.position.y);
   }
 
-  addStartButton() {
+  addStartButton(cb: () => void) {
     const sprite = PIXI.Sprite.from('./static/start.png');
     sprite.anchor.set(0.5, 0.5);
     sprite.width = 256;
     sprite.height = 100;
     sprite.x = this._app.screen.width / 2;
     sprite.y = this._app.screen.height / 2 + 100;
+    sprite.interactive = true;
+
+    sprite.on('pointerdown', cb);
 
     this._sprites['start-button'] = sprite;
     this._app.stage.addChild(sprite);

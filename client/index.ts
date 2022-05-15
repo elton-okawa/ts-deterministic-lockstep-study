@@ -4,7 +4,9 @@ import { PhysicsWorld } from "./scripts/PhysicsWorld";
 import { InputBuffer, RawInput } from "./scripts/InputBuffer";
 
 const client = new Colyseus.Client('ws://localhost:2567');
-let room;
+const localClientId = Date.now();
+
+let room: Colyseus.Room;
 
 const FIXED_DELTA = 33.33;
 
@@ -19,12 +21,29 @@ let playerInputs: InputBuffer;
 let frame;
 
 let updateTimer: NodeJS.Timer;
+let isOwner = false;
+let started = false;
+
+interface CheckOwnershipMessage {
+  isOwner: boolean;
+}
 
 function connect() {
-  client.joinOrCreate<GameRoomState>('game_room').then(gameRoom => {
+  client.joinOrCreate<GameRoomState>('game_room', { localClientId }).then(gameRoom => {
     console.log(gameRoom.sessionId, 'joined', gameRoom.name);
     room = gameRoom;
-    setup(gameRoom.sessionId);
+
+    gameRoom.onMessage('checkOwnership', (message: CheckOwnershipMessage) => {
+      isOwner = message.isOwner;
+      console.log(`isOwner: ${isOwner}`);
+
+      if (isOwner) {
+        app.removeWaitingForHost();
+        app.addStartButton(() => {
+          console.log('click');
+        });
+      }
+    });
 
     // TODO perform static sync using gameRoom.state
     gameRoom.onStateChange(state => {
@@ -41,6 +60,9 @@ function connect() {
       console.log(`Leave code '${code}'`);
       clearInterval(updateTimer);
     });
+
+    setup(gameRoom.sessionId);
+    room.send('checkOwnership', { localClientId });
   }).catch(e => {
       console.log('JOIN ERROR', e);
   });
@@ -51,7 +73,12 @@ function setup(id: string) {
 
   playerId = id;
   frame = 0;
-  playerInputs = new InputBuffer();
+  playerInputs = new InputBuffer(); 
+
+  app.addWaitingForHost();
+}
+
+function start() {
   world = new PhysicsWorld();
   world.addPlayer(playerId, { x: 150, y: 0 });
 
