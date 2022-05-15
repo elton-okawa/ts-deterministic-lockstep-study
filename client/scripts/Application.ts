@@ -1,5 +1,7 @@
-import { application } from "express";
 import { GameObject } from "./GameObject";
+
+const WAITING_TEXT_KEY = 'waiting-text';
+const START_BUTTON_KEY = 'start-button';
 
 export class Application {
 
@@ -48,12 +50,14 @@ export class Application {
 
     sprite.on('pointerdown', cb);
 
-    this._sprites['start-button'] = sprite;
+    this._sprites[START_BUTTON_KEY] = sprite;
     this._app.stage.addChild(sprite);
   }
 
-  removeStartButton() {
-    this._app.stage.removeChild(this._sprites['start-button']);
+  tryRemoveStartButton() {
+    if (START_BUTTON_KEY in this._sprites) {
+      this._app.stage.removeChild(this._sprites[START_BUTTON_KEY]);
+    }
   }
 
   addWaitingForHost() {
@@ -62,12 +66,14 @@ export class Application {
     text.x = this._app.screen.width / 2;
     text.y = this._app.screen.height / 2 + 100;
 
-    this._sprites['waiting-text'] = text;
+    this._sprites[WAITING_TEXT_KEY] = text;
     this._app.stage.addChild(text);
   }
 
-  removeWaitingForHost() {
-    this._app.stage.removeChild(this._sprites['waiting-text']);
+  tryRemoveWaitingForHost() {
+    if (WAITING_TEXT_KEY in this._sprites) {
+      this._app.stage.removeChild(this._sprites[WAITING_TEXT_KEY]);
+    }
   }
 
   render() {

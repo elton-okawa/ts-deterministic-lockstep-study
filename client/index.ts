@@ -38,11 +38,17 @@ function connect() {
       console.log(`isOwner: ${isOwner}`);
 
       if (isOwner) {
-        app.removeWaitingForHost();
+        app.tryRemoveWaitingForHost();
         app.addStartButton(() => {
-          console.log('click');
+          console.log('Start game clicked');
+          room.send('startGame', { localClientId });
         });
       }
+    });
+
+    gameRoom.onMessage('startGame', () => {
+      start();
+      started = true;
     });
 
     // TODO perform static sync using gameRoom.state
@@ -79,6 +85,9 @@ function setup(id: string) {
 }
 
 function start() {
+  app.tryRemoveStartButton();
+  app.tryRemoveWaitingForHost();
+
   world = new PhysicsWorld();
   world.addPlayer(playerId, { x: 150, y: 0 });
 

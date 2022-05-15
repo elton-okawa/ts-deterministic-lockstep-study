@@ -13,6 +13,10 @@ interface CheckOwnershipMessage {
   localClientId: number;
 }
 
+interface StartGameMessage {
+  localClientId: number;
+}
+
 // TODO physics depend on game object
 export class GameRoom extends Room<GameRoomState> {
 
@@ -68,6 +72,17 @@ export class GameRoom extends Room<GameRoomState> {
     this.onMessage('checkOwnership', (client: Client, input: CheckOwnershipMessage) => {
       const isOwner = input.localClientId === this.ownerId;
       client.send('checkOwnership', { isOwner });
+    });
+
+    this.onMessage('startGame', async (client: Client, input: StartGameMessage) => {
+      const isOwner = input.localClientId === this.ownerId;
+      if (isOwner) {
+        // TODO send player position
+        await this.lock();
+        this.broadcast('startGame');
+      } else {
+        console.log('Only owner can start the game');
+      }
     });
   }
 }
