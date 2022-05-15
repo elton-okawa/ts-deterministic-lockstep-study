@@ -23,6 +23,7 @@ export class GameRoom extends Room<GameRoomState> {
   world: PhysicsWorld;
   timeSinceLastUpdate: number = 0;
   ownerId: number;
+  started = false;
 
   onCreate (options: ClientOptions) {
     this.world = new PhysicsWorld();
@@ -31,36 +32,35 @@ export class GameRoom extends Room<GameRoomState> {
     this.setPatchRate(50);
     this.setupMessageHandlers();
     this.ownerId = options.localClientId;
-    this.start();
     console.log(`Room '${this.roomId}' created with owner '${this.ownerId}'`);
   }
 
   onJoin (client: Client, options: ClientOptions) {
     console.log(client.sessionId, "joined!");
     this.state.addPlayer(client.id);
+    // TODO add player in world
   }
 
   onLeave (client: Client, consented: boolean) {
     console.log(client.sessionId, "left!");
     this.state.removePlayer(client.id);
+    // TODO remove player from world
   }
 
   onDispose() {
     console.log("room", this.roomId, "disposing...");
   }
 
-  start() {
-    this.world.start();
-  }
-
   update(delta: number) {
-    while (this.timeSinceLastUpdate >= delta) {
-      this.world.update();
-
-      this.timeSinceLastUpdate -= delta;
+    if (this.started) {
+      while (this.timeSinceLastUpdate >= delta) {
+        this.world.update();
+  
+        this.timeSinceLastUpdate -= delta;
+      }
+  
+      this.timeSinceLastUpdate += delta;
     }
-
-    this.timeSinceLastUpdate += delta;
   }
 
   private setupMessageHandlers() {
@@ -77,9 +77,11 @@ export class GameRoom extends Room<GameRoomState> {
     this.onMessage('startGame', async (client: Client, input: StartGameMessage) => {
       const isOwner = input.localClientId === this.ownerId;
       if (isOwner) {
+        // TODO maybe set a time to start to everyone start at the same time
         // TODO send player position
         await this.lock();
         this.broadcast('startGame');
+        this.started = true;
       } else {
         console.log('Only owner can start the game');
       }

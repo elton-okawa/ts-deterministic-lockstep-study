@@ -48,8 +48,6 @@ export class PhysicsWorld {
     this.bodies.push(rigidBody);
   }
 
-  start() {}
-
   update() {
     this.world.step();
 
