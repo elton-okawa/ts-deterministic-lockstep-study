@@ -1,3 +1,4 @@
+import { application } from "express";
 import { GameObject } from "./GameObject";
 
 export class Application {
@@ -34,6 +35,36 @@ export class Application {
     this._ensureSprite(gameObject);
 
     this._sprites[gameObject.id].position.set(gameObject.position.x, gameObject.position.y);
+  }
+
+  addStartButton() {
+    const sprite = PIXI.Sprite.from('./static/start.png');
+    sprite.anchor.set(0.5, 0.5);
+    sprite.width = 256;
+    sprite.height = 100;
+    sprite.x = this._app.screen.width / 2;
+    sprite.y = this._app.screen.height / 2 + 100;
+
+    this._sprites['start-button'] = sprite;
+    this._app.stage.addChild(sprite);
+  }
+
+  removeStartButton() {
+    this._app.stage.removeChild(this._sprites['start-button']);
+  }
+
+  addWaitingForHost() {
+    const text = new PIXI.Text('Waiting for host');
+    text.anchor.set(0.5, 0.5);
+    text.x = this._app.screen.width / 2;
+    text.y = this._app.screen.height / 2 + 100;
+
+    this._sprites['waiting-text'] = text;
+    this._app.stage.addChild(text);
+  }
+
+  removeWaitingForHost() {
+    this._app.stage.removeChild(this._sprites['waiting-text']);
   }
 
   render() {
