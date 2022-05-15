@@ -17,13 +17,20 @@ interface StartGameMessage {
   localClientId: number;
 }
 
-// TODO physics depend on game object
+interface PlayerInfo {
+  id: string;
+  position: { x: number, y: number };
+}
+
+// TODO simulate physics on server and send state hash to verify desync
 export class GameRoom extends Room<GameRoomState> {
 
   world: PhysicsWorld;
   timeSinceLastUpdate: number = 0;
   ownerId: number;
   started = false;
+  spawnPointX = 100;
+  spawnPoints: { [key: string]: PlayerInfo } = {};
 
   onCreate (options: ClientOptions) {
     this.world = new PhysicsWorld();
@@ -38,13 +45,17 @@ export class GameRoom extends Room<GameRoomState> {
   onJoin (client: Client, options: ClientOptions) {
     console.log(client.sessionId, "joined!");
     this.state.addPlayer(client.id);
-    // TODO add player in world
+    this.spawnPoints[client.id] = {
+      id: client.id,
+      position: { x: this.spawnPointX, y: 50 },
+    }
+    this.spawnPointX += 100;
   }
 
   onLeave (client: Client, consented: boolean) {
     console.log(client.sessionId, "left!");
     this.state.removePlayer(client.id);
-    // TODO remove player from world
+    delete this.spawnPoints[client.id];
   }
 
   onDispose() {
@@ -77,10 +88,11 @@ export class GameRoom extends Room<GameRoomState> {
     this.onMessage('startGame', async (client: Client, input: StartGameMessage) => {
       const isOwner = input.localClientId === this.ownerId;
       if (isOwner) {
+        console.log(`Starting game with:`);
+        console.log(Object.values(this.spawnPoints));
         // TODO maybe set a time to start to everyone start at the same time
-        // TODO send player position
         await this.lock();
-        this.broadcast('startGame');
+        this.broadcast('startGame', Object.values(this.spawnPoints));
         this.started = true;
       } else {
         console.log('Only owner can start the game');

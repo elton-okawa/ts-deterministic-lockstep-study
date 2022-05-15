@@ -28,6 +28,11 @@ interface CheckOwnershipMessage {
   isOwner: boolean;
 }
 
+interface PlayerInfo {
+  id: string;
+  position: { x: number, y: number };
+}
+
 function connect() {
   client.joinOrCreate<GameRoomState>('game_room', { localClientId }).then(gameRoom => {
     console.log(gameRoom.sessionId, 'joined', gameRoom.name);
@@ -46,8 +51,8 @@ function connect() {
       }
     });
 
-    gameRoom.onMessage('startGame', () => {
-      start();
+    gameRoom.onMessage('startGame', (playerInfos: PlayerInfo[]) => {
+      start(playerInfos);
       started = true;
     });
 
@@ -84,12 +89,13 @@ function setup(id: string) {
   app.addWaitingForHost();
 }
 
-function start() {
+function start(playerInfos: PlayerInfo[]) {
   app.tryRemoveStartButton();
   app.tryRemoveWaitingForHost();
 
   world = new PhysicsWorld();
-  world.addPlayer(playerId, { x: 150, y: 0 });
+
+  playerInfos.forEach(player => world.addPlayer(player.id, player.position));
 
   lastUpdate = Date.now();
   updateTimer = setInterval(update, 16.67);
