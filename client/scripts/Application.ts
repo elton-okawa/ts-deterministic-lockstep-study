@@ -37,6 +37,7 @@ export class Application {
     this._ensureSprite(gameObject);
 
     this._sprites[gameObject.id].position.set(gameObject.position.x, gameObject.position.y);
+    this._sprites[gameObject.id].rotation = gameObject.rotation;
   }
 
   addStartButton(cb: () => void) {
