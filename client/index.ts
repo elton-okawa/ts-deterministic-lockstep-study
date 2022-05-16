@@ -4,7 +4,9 @@ import { PhysicsWorld } from "./scripts/PhysicsWorld";
 import { InputBuffer, RawInput } from "./scripts/InputBuffer";
 
 const client = new Colyseus.Client('ws://localhost:2567');
-let room;
+const localClientId = Date.now();
+
+let room: Colyseus.Room;
 
 const FIXED_DELTA = 33.33;
 
@@ -19,12 +21,40 @@ let playerInputs: InputBuffer;
 let frame;
 
 let updateTimer: NodeJS.Timer;
+let isOwner = false;
+let started = false;
+
+interface CheckOwnershipMessage {
+  isOwner: boolean;
+}
+
+interface PlayerInfo {
+  id: string;
+  position: { x: number, y: number };
+}
 
 function connect() {
-  client.joinOrCreate<GameRoomState>('game_room').then(gameRoom => {
+  client.joinOrCreate<GameRoomState>('game_room', { localClientId }).then(gameRoom => {
     console.log(gameRoom.sessionId, 'joined', gameRoom.name);
     room = gameRoom;
-    setup(gameRoom.sessionId);
+
+    gameRoom.onMessage('checkOwnership', (message: CheckOwnershipMessage) => {
+      isOwner = message.isOwner;
+      console.log(`isOwner: ${isOwner}`);
+
+      if (isOwner) {
+        app.tryRemoveWaitingForHost();
+        app.addStartButton(() => {
+          console.log('Start game clicked');
+          room.send('startGame', { localClientId });
+        });
+      }
+    });
+
+    gameRoom.onMessage('startGame', (playerInfos: PlayerInfo[]) => {
+      start(playerInfos);
+      started = true;
+    });
 
     // TODO perform static sync using gameRoom.state
     gameRoom.onStateChange(state => {
@@ -41,6 +71,9 @@ function connect() {
       console.log(`Leave code '${code}'`);
       clearInterval(updateTimer);
     });
+
+    setup(gameRoom.sessionId);
+    room.send('checkOwnership', { localClientId });
   }).catch(e => {
       console.log('JOIN ERROR', e);
   });
@@ -51,9 +84,18 @@ function setup(id: string) {
 
   playerId = id;
   frame = 0;
-  playerInputs = new InputBuffer();
+  playerInputs = new InputBuffer(); 
+
+  app.addWaitingForHost();
+}
+
+function start(playerInfos: PlayerInfo[]) {
+  app.tryRemoveStartButton();
+  app.tryRemoveWaitingForHost();
+
   world = new PhysicsWorld();
-  world.addPlayer(playerId, { x: 150, y: 0 });
+
+  playerInfos.forEach(player => world.addPlayer(player.id, player.position));
 
   lastUpdate = Date.now();
   updateTimer = setInterval(update, 16.67);
@@ -97,14 +139,13 @@ function update() {
   while (timeSinceLastUpdate >= FIXED_DELTA) {
     timeSinceLastUpdate -= FIXED_DELTA;
 
-    // TODO enable this after setup initial state sync
-    // currentState.players.forEach(player => {
-    //   world.applyInput(player.id, player.inputBuffer[frame % InputBuffer.SIZE]);
-    // });
+    // TODO verify if own input has been rejected
+    currentState.players.forEach(player => {
+      world.applyInput(player.id, player.inputBuffer.inputs[frame % InputBuffer.SIZE]);
+    });
 
     playerInputs.setInput(frame, currentInput);
     room.send('input', { frame, ...currentInput });
-    world.applyInput(playerId, playerInputs.getInput(frame));
     world.update();
 
     frame += 1;
