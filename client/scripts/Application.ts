@@ -62,7 +62,7 @@ export class Application {
   }
 
   addWaitingForHost() {
-    const text = new PIXI.Text('Waiting for host');
+    const text = new PIXI.Text('Waiting for host', new PIXI.TextStyle({ fill: ['#ffffff'] }));
     text.anchor.set(0.5, 0.5);
     text.x = this._app.screen.width / 2;
     text.y = this._app.screen.height / 2 + 100;
