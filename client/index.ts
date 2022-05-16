@@ -139,14 +139,13 @@ function update() {
   while (timeSinceLastUpdate >= FIXED_DELTA) {
     timeSinceLastUpdate -= FIXED_DELTA;
 
-    // TODO enable this after setup initial state sync
-    // currentState.players.forEach(player => {
-    //   world.applyInput(player.id, player.inputBuffer[frame % InputBuffer.SIZE]);
-    // });
+    // TODO verify if own input has been rejected
+    currentState.players.forEach(player => {
+      world.applyInput(player.id, player.inputBuffer.inputs[frame % InputBuffer.SIZE]);
+    });
 
     playerInputs.setInput(frame, currentInput);
     room.send('input', { frame, ...currentInput });
-    world.applyInput(playerId, playerInputs.getInput(frame));
     world.update();
 
     frame += 1;
