@@ -38,6 +38,10 @@ Try
 - If true it'll compare to the predicted tick and rollback if necessary
 - If false it'll continue normally
 
+## Credits
+
+- Font: `Kenney Future` from [Kenney Fonts](https://www.kenney.nl/assets/kenney-fonts) by [Kenney](https://www.kenney.nl/) under license [Creative Commons Zero, CC0](https://creativecommons.org/publicdomain/zero/1.0/). Note: original file `.ttf` has been converted to `.png` and `.xml` for library compatibility
+
 ## License
 
 MIT

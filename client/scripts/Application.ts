@@ -2,23 +2,41 @@ import { GameObject } from "./GameObject";
 
 const WAITING_TEXT_KEY = 'waiting-text';
 const START_BUTTON_KEY = 'start-button';
+const FRAME_KEY = 'frame';
 
 export class Application {
 
   _app: PIXI.Application;
+  _overlay: PIXI.Container;
   _sprites: { [id: string]: PIXI.Sprite } = {};
   _gameObjects: GameObject[] = [];
+  _texts: { [id: string]: PIXI.BitmapText } = {};
 
   constructor(width, height) {
     const app = new PIXI.Application({ width, height });
+    // TODO maybe we should control rendering outside
     app.ticker.add(this.render.bind(this));
     document.body.appendChild(app.view);
 
+    app.stage.sortableChildren = true
+
+    this._overlay = new PIXI.Container();
+    this._overlay.zIndex = 1000;
+    app.stage.addChild(this._overlay);
+    
+    app.loader.onStart.add(() => console.log('started'));
+    app.loader.onComplete.add(() => console.log('completed'));
+    app.loader.onError.add((error) => console.log(error));
+    app.loader.add('kenney', './static/fonts/Kenney-Future.xml').load(this.addFrame.bind(this));
     this._app = app;
   }
 
   set gameObjects(objects: GameObject[]){ 
     this._gameObjects = objects;
+  }
+
+  set frame(arg: number) {
+    this._texts[FRAME_KEY].text = `Frame: ${arg}`;
   }
 
   _ensureSprite(gameObject: GameObject) {
@@ -38,6 +56,16 @@ export class Application {
 
     this._sprites[gameObject.id].position.set(gameObject.position.x, gameObject.position.y);
     this._sprites[gameObject.id].rotation = gameObject.rotation;
+  }
+
+  private addFrame() {
+    const text = new PIXI.BitmapText('Frame: 0', { fontName: 'Kenney-Future', fontSize: 30, align: 'left' });
+
+    text.x = this._app.screen.width - 250;
+    text.y = 0;
+
+    this._overlay.addChild(text);
+    this._texts[FRAME_KEY] = text;
   }
 
   addStartButton(cb: () => void) {
