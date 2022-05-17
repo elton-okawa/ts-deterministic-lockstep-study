@@ -7,15 +7,23 @@ const FRAME_KEY = 'frame';
 export class Application {
 
   _app: PIXI.Application;
+  _overlay: PIXI.Container;
   _sprites: { [id: string]: PIXI.Sprite } = {};
   _gameObjects: GameObject[] = [];
   _texts: { [id: string]: PIXI.BitmapText } = {};
 
   constructor(width, height) {
     const app = new PIXI.Application({ width, height });
+    // TODO maybe we should control rendering outside
     app.ticker.add(this.render.bind(this));
     document.body.appendChild(app.view);
 
+    app.stage.sortableChildren = true
+
+    this._overlay = new PIXI.Container();
+    this._overlay.zIndex = 1000;
+    app.stage.addChild(this._overlay);
+    
     app.loader.onStart.add(() => console.log('started'));
     app.loader.onComplete.add(() => console.log('completed'));
     app.loader.onError.add((error) => console.log(error));
@@ -56,7 +64,7 @@ export class Application {
     text.x = this._app.screen.width - 250;
     text.y = 0;
 
-    this._app.stage.addChild(text);
+    this._overlay.addChild(text);
     this._texts[FRAME_KEY] = text;
   }
 
