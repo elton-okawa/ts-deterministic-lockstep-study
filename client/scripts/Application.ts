@@ -2,23 +2,40 @@ import { GameObject } from "./GameObject";
 
 const WAITING_TEXT_KEY = 'waiting-text';
 const START_BUTTON_KEY = 'start-button';
+const FRAME_KEY = 'frame';
 
 export class Application {
 
   _app: PIXI.Application;
   _sprites: { [id: string]: PIXI.Sprite } = {};
   _gameObjects: GameObject[] = [];
+  _texts: { [id: string]: PIXI.BitmapText } = {};
 
   constructor(width, height) {
     const app = new PIXI.Application({ width, height });
     app.ticker.add(this.render.bind(this));
     document.body.appendChild(app.view);
 
+    // app.loader.add('kenney', './static/kenney-pixel.fnt').load(
+    //   this.addFrame.bind(this),  
+    // );
+    app.loader.onStart.add(() => console.log('started'));
+    app.loader.onComplete.add(() => console.log('completed'));
+    app.loader.onError.add((error) => console.log(error));
+    PIXI.LoaderResource.setExtensionXhrType('fnt', PIXI.LoaderResource.XHR_RESPONSE_TYPE.TEXT);
+    app.loader.add('kenney', './static/kenney-pixel.fnt').load(() => {
+      console.log('load callback');
+      this.addFrame();
+    });
     this._app = app;
   }
 
   set gameObjects(objects: GameObject[]){ 
     this._gameObjects = objects;
+  }
+
+  set frame(arg: number) {
+    this._texts[FRAME_KEY].text = `Frame: ${arg}`;
   }
 
   _ensureSprite(gameObject: GameObject) {
@@ -38,6 +55,24 @@ export class Application {
 
     this._sprites[gameObject.id].position.set(gameObject.position.x, gameObject.position.y);
     this._sprites[gameObject.id].rotation = gameObject.rotation;
+  }
+
+  private addFrame() {
+    if (PIXI.BitmapFont.available['kenney']) {
+      console.log('available');
+    } else {
+      console.log('not available');
+      console.log(PIXI.BitmapFont.available);
+    }
+
+    const text = new PIXI.BitmapText('Frame: 0', { fontName: 'kenney', fontSize: 100, align: 'left' });
+
+    // text.x = this._app.screen.width - 100;
+    text.x = 0;
+    text.y = 0;
+
+    this._app.stage.addChild(text);
+    this._texts[FRAME_KEY] = text;
   }
 
   addStartButton(cb: () => void) {

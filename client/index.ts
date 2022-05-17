@@ -139,6 +139,7 @@ function update() {
   while (timeSinceLastUpdate >= FIXED_DELTA) {
     timeSinceLastUpdate -= FIXED_DELTA;
 
+    app.frame = frame;
     // TODO verify if own input has been rejected
     currentState.players.forEach(player => {
       world.applyInput(player.id, player.inputBuffer.inputs[frame % InputBuffer.SIZE]);
