@@ -16,17 +16,10 @@ export class Application {
     app.ticker.add(this.render.bind(this));
     document.body.appendChild(app.view);
 
-    // app.loader.add('kenney', './static/kenney-pixel.fnt').load(
-    //   this.addFrame.bind(this),  
-    // );
     app.loader.onStart.add(() => console.log('started'));
     app.loader.onComplete.add(() => console.log('completed'));
     app.loader.onError.add((error) => console.log(error));
-    PIXI.LoaderResource.setExtensionXhrType('fnt', PIXI.LoaderResource.XHR_RESPONSE_TYPE.TEXT);
-    app.loader.add('kenney', './static/kenney-pixel.fnt').load(() => {
-      console.log('load callback');
-      this.addFrame();
-    });
+    app.loader.add('kenney', './static/fonts/Kenney-Future.xml').load(this.addFrame.bind(this));
     this._app = app;
   }
 
@@ -58,17 +51,9 @@ export class Application {
   }
 
   private addFrame() {
-    if (PIXI.BitmapFont.available['kenney']) {
-      console.log('available');
-    } else {
-      console.log('not available');
-      console.log(PIXI.BitmapFont.available);
-    }
+    const text = new PIXI.BitmapText('Frame: 0', { fontName: 'Kenney-Future', fontSize: 30, align: 'left' });
 
-    const text = new PIXI.BitmapText('Frame: 0', { fontName: 'kenney', fontSize: 100, align: 'left' });
-
-    // text.x = this._app.screen.width - 100;
-    text.x = 0;
+    text.x = this._app.screen.width - 250;
     text.y = 0;
 
     this._app.stage.addChild(text);
