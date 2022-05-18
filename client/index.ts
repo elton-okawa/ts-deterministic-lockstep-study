@@ -2,6 +2,7 @@ import { GameRoomState } from "./generated/GameRoomState";
 import { Application } from './scripts/Application';
 import { PhysicsWorld } from "./scripts/PhysicsWorld";
 import { InputBuffer, RawInput } from "./scripts/InputBuffer";
+import { Ping } from "./scripts/Ping";
 
 const client = new Colyseus.Client('ws://localhost:2567');
 const localClientId = Date.now();
@@ -23,6 +24,7 @@ let frame;
 let updateTimer: NodeJS.Timer;
 let isOwner = false;
 let started = false;
+let ping: Ping;
 
 interface CheckOwnershipMessage {
   isOwner: boolean;
@@ -56,6 +58,10 @@ function connect() {
       started = true;
     });
 
+    gameRoom.onMessage('pong', () => {
+
+    });
+
     // TODO perform static sync using gameRoom.state
     gameRoom.onStateChange(state => {
       // TODO compare state to rollback
@@ -85,6 +91,12 @@ function setup(id: string) {
   playerId = id;
   frame = 0;
   playerInputs = new InputBuffer(); 
+
+  ping = new Ping(() => {
+    room.send('ping');
+  });
+  room.onMessage('pong', ping.handlePong.bind(ping));
+  ping.performPing();
 
   app.addWaitingForHost();
 }
@@ -140,6 +152,7 @@ function update() {
     timeSinceLastUpdate -= FIXED_DELTA;
 
     app.frame = frame;
+    app.ping = ping.ping;
     // TODO verify if own input has been rejected
     currentState.players.forEach(player => {
       world.applyInput(player.id, player.inputBuffer.inputs[frame % InputBuffer.SIZE]);

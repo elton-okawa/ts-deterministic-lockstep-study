@@ -3,6 +3,7 @@ import { GameObject } from "./GameObject";
 const WAITING_TEXT_KEY = 'waiting-text';
 const START_BUTTON_KEY = 'start-button';
 const FRAME_KEY = 'frame';
+const PING_KEY = 'ping';
 
 export class Application {
 
@@ -27,7 +28,10 @@ export class Application {
     app.loader.onStart.add(() => console.log('started'));
     app.loader.onComplete.add(() => console.log('completed'));
     app.loader.onError.add((error) => console.log(error));
-    app.loader.add('kenney', './static/fonts/Kenney-Future.xml').load(this.addFrame.bind(this));
+    app.loader.add('kenney', './static/fonts/Kenney-Future.xml').load(() => {
+      this.addFrame();
+      this.addPing();
+    });
     this._app = app;
   }
 
@@ -37,6 +41,10 @@ export class Application {
 
   set frame(arg: number) {
     this._texts[FRAME_KEY].text = `Frame: ${arg}`;
+  }
+
+  set ping(arg: number) {
+    this._texts[PING_KEY].text = `Ping: ${arg} ms`;
   }
 
   _ensureSprite(gameObject: GameObject) {
@@ -66,6 +74,16 @@ export class Application {
 
     this._overlay.addChild(text);
     this._texts[FRAME_KEY] = text;
+  }
+
+  private addPing() {
+    const text = new PIXI.BitmapText('Ping: 0 ms', { fontName: 'Kenney-Future', fontSize: 30, align: 'left' });
+
+    text.x = this._app.screen.width - 250;
+    text.y = 30;
+
+    this._overlay.addChild(text);
+    this._texts[PING_KEY] = text;
   }
 
   addStartButton(cb: () => void) {

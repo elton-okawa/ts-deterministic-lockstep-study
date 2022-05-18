@@ -75,6 +75,10 @@ export class GameRoom extends Room<GameRoomState> {
   }
 
   private setupMessageHandlers() {
+    this.onMessage('ping', (client: Client) => {
+      client.send('pong');
+    });
+
     this.onMessage('input', (client: Client, input: InputMessage) => {
       // TODO block input with old frame, client send real frame instead of delayed
       this.state.players.get(client.id).setInput(input);
