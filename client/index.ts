@@ -155,7 +155,11 @@ function update() {
     app.ping = ping.ping;
     // TODO verify if own input has been rejected
     currentState.players.forEach(player => {
-      world.applyInput(player.id, player.inputBuffer.inputs[frame % InputBuffer.SIZE]);
+      const input = player.inputBuffer.inputs[frame % InputBuffer.SIZE];
+      if (input.frame !== frame) {
+        console.log(`Input has different frame (frame: ${frame}, input: ${input.frame})`);
+      }
+      world.applyInput(player.id, input);
     });
 
     playerInputs.setInput(frame, currentInput);
