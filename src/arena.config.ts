@@ -16,6 +16,9 @@ export default Arena({
          */
         gameServer.define('game_room', GameRoom);
 
+        if (process.env.NODE_ENV !== "production") {
+            gameServer.simulateLatency(20);
+        }
     },
 
     initializeExpress: (app) => {
