@@ -4,8 +4,8 @@ import { PlayerSchema } from "./PlayerSchema";
 export class GameRoomState extends Schema {
   @type({ map: PlayerSchema }) players = new MapSchema<PlayerSchema>();
 
-  addPlayer(id: string) {
-    this.players.set(id, new PlayerSchema(id));
+  addPlayer(id: string, staticDelay: number, window: number) {
+    this.players.set(id, new PlayerSchema(id, staticDelay, window));
   }
 
   removePlayer(id: string) {

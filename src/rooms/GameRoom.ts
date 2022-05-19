@@ -4,6 +4,8 @@ import { GameRoomState } from "./schema/GameRoomState";
 import { InputMessage } from "./schema/PlayerSchema";
 
 const TICK = 33.33; // ~30fps physics
+const STATIC_DELAY = 3;
+const INPUT_WINDOW = 10;
 
 interface ClientOptions {
   localClientId: number;
@@ -25,18 +27,19 @@ interface PlayerInfo {
 // TODO simulate physics on server and send state hash to verify desync
 export class GameRoom extends Room<GameRoomState> {
 
-  world: PhysicsWorld;
-  timeSinceLastUpdate: number = 0;
-  ownerId: number;
-  started = false;
-  spawnPointX = 100;
-  spawnPoints: { [key: string]: PlayerInfo } = {};
+  private world: PhysicsWorld;
+  private timeSinceLastUpdate: number = 0;
+  private ownerId: number;
+  private started = false;
+  private spawnPointX = 100;
+  private spawnPoints: { [key: string]: PlayerInfo } = {};
+  private frame = 0;
 
   onCreate (options: ClientOptions) {
     this.world = new PhysicsWorld();
     this.setState(new GameRoomState());
     this.setSimulationInterval((delta) => this.update(delta), TICK);
-    this.setPatchRate(50);
+    this.setPatchRate(TICK);
     this.setupMessageHandlers();
     this.ownerId = options.localClientId;
     console.log(`Room '${this.roomId}' created with owner '${this.ownerId}'`);
@@ -44,7 +47,7 @@ export class GameRoom extends Room<GameRoomState> {
 
   onJoin (client: Client, options: ClientOptions) {
     console.log(client.sessionId, "joined!");
-    this.state.addPlayer(client.id);
+    this.state.addPlayer(client.id, STATIC_DELAY, INPUT_WINDOW);
     this.spawnPoints[client.id] = {
       id: client.id,
       position: { x: this.spawnPointX, y: 50 },
@@ -64,10 +67,11 @@ export class GameRoom extends Room<GameRoomState> {
 
   update(delta: number) {
     if (this.started) {
-      while (this.timeSinceLastUpdate >= delta) {
+      while (this.timeSinceLastUpdate >= TICK) {
+        this.frame += 1;
         this.world.update();
   
-        this.timeSinceLastUpdate -= delta;
+        this.timeSinceLastUpdate -= TICK;
       }
   
       this.timeSinceLastUpdate += delta;
@@ -81,6 +85,9 @@ export class GameRoom extends Room<GameRoomState> {
 
     this.onMessage('input', (client: Client, input: InputMessage) => {
       // TODO block input with old frame, client send real frame instead of delayed
+      if (this.frame >= input.frame + INPUT_WINDOW) {
+        console.log(`It should reject input from ${client.id}`);
+      }
       this.state.players.get(client.id).setInput(input);
     });
 

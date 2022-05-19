@@ -1,9 +1,6 @@
 import { Schema, ArraySchema, type } from "@colyseus/schema";
 import { InputSchema } from "./InputSchema";
 
-const STATIC_DELAY = 3;
-const ROLLBACK_FRAMES = 7;
-
 export interface RawInput {
   up: boolean;
   down: boolean;
@@ -15,16 +12,21 @@ export interface RawInput {
 export class InputBufferSchema extends Schema {
   @type([ InputSchema ]) inputs;
 
-  constructor() {
+  private staticDelay: number;
+  private window: number;
+
+  constructor(staticDelay: number, window: number) {
     super();
+    this.staticDelay = staticDelay;
+    this.window = window;
     this.inputs = new ArraySchema<InputSchema>(...Array.from(
-      { length: STATIC_DELAY + ROLLBACK_FRAMES },
+      { length: this.window },
       () => new InputSchema(),
     ));
   }
 
   setInput(frame: number, rawInput: RawInput) {
-    const targetFrame = frame + STATIC_DELAY;
+    const targetFrame = frame + this.staticDelay;
     const input = this.getInput(targetFrame);
     input.frame = targetFrame;
     input.up = rawInput.up;
