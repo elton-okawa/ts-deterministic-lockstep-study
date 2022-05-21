@@ -58,10 +58,6 @@ function connect() {
       started = true;
     });
 
-    gameRoom.onMessage('pong', () => {
-
-    });
-
     // TODO perform static sync using gameRoom.state
     gameRoom.onStateChange(state => {
       // TODO compare state to rollback
@@ -96,7 +92,7 @@ function setup(id: string) {
     room.send('ping');
   });
   room.onMessage('pong', ping.handlePong.bind(ping));
-  ping.performPing();
+  ping.startPingRoutine();
 
   app.addWaitingForHost();
 }

@@ -23,6 +23,10 @@ export class Ping {
     this.counter = (this.counter + 1) % WINDOW_SIZE;
   }
 
+  startPingRoutine() {
+    this.performPing();
+  }
+
   performPing() {
     this.time = Date.now();
     this.pinger();
