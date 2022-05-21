@@ -16,8 +16,6 @@ export class Application {
 
   constructor(width, height) {
     const app = new PIXI.Application({ width, height });
-    // TODO maybe we should control rendering outside
-    app.ticker.add(this.render.bind(this));
     document.body.appendChild(app.view);
 
     app.stage.sortableChildren = true
