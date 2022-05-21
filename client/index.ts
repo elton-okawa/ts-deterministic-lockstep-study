@@ -10,16 +10,19 @@ const localClientId = Date.now();
 let room: Colyseus.Room;
 
 const FIXED_DELTA = 33.33;
+const FRAME_FREQUENCY = 1 / FIXED_DELTA;
+const FPS = 60;
 
 let currentState: GameRoomState;
 let app: Application;
 let world: PhysicsWorld;
 let timeSinceLastUpdate = 0;
-let lastUpdate;
+let lastUpdate: number;
 let currentInput: RawInput;
 let ownId: string;
 let ownInputs: InputBuffer;
-let frame;
+let frame: number;
+let framesAhead: number;
 
 let updateTimer: NodeJS.Timer;
 let isOwner = false;
@@ -61,7 +64,11 @@ function connect() {
     // TODO perform static sync using gameRoom.state
     gameRoom.onStateChange(state => {
       // TODO compare state to rollback
+      // console.log(`Inputs: ${state.players.get(ownId).inputBuffer.inputs.map((input) => input.frame)}`)
       currentState = state;
+      const halfRTT = ping.ping / 2;
+      framesAhead = frame - (state.frame + halfRTT * FRAME_FREQUENCY);
+      // console.log(`frame: ${frame}, stateFrame: ${state.frame}, framesAhead: ${framesAhead}`);
     });
 
     gameRoom.onError((code: number, message: string) => {
@@ -109,7 +116,7 @@ function start(playerInfos: PlayerInfo[]) {
   playerInfos.forEach(player => world.addPlayer(player.id, player.position));
 
   lastUpdate = Date.now();
-  updateTimer = setInterval(update, 16.67);
+  updateTimer = setInterval(update, 1000 / FPS);
   currentInput = {
     up: false,
     down: false,
@@ -156,7 +163,8 @@ function update() {
     // TODO verify if own input has been rejected
     currentState.players.forEach(player => {
       const input = player.inputBuffer.inputs[frame % InputBuffer.SIZE];
-      if (input.frame !== frame && inputWarningCount > 20) {
+      // if (input.frame !== frame && inputWarningCount > 20) {
+      if (input.frame !== frame) {
         console.log(`Input has different frame (own: ${player.id === ownId}, frame: ${frame}, input: ${input.frame})`);
         inputWarningCount = 0;
       }
