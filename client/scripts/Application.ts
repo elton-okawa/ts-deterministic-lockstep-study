@@ -15,6 +15,11 @@ export class Application {
   private _loaded = false;
 
   constructor(width, height) {
+    // TODO control pixi render
+    // PIXI.Ticker.shared.autoStart = false;
+    // PIXI.Ticker.shared.stop(); // ensure it's stopped
+    // PIXI.Ticker.shared.update(time);
+    // const app = new PIXI.Application({ width, height, autoStart: false, sharedTicker: true });
     const app = new PIXI.Application({ width, height });
     document.body.appendChild(app.view);
 
