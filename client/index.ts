@@ -92,7 +92,7 @@ function setup(id: string) {
   app = new Application(640, 360);
 
   ownId = id;
-  frame = 0;
+  frame = 1;
   ownInputs = new InputBuffer(); 
 
   ping = new Ping(() => {
@@ -156,7 +156,7 @@ let inputWarningCount = 21;
 function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
-  while (timeSinceLastUpdate >= FIXED_DELTA) {
+  while (timeSinceLastUpdate >= FIXED_DELTA && frame < currentState.frame) {
     timeSinceLastUpdate -= FIXED_DELTA;
 
     app.frame = frame;

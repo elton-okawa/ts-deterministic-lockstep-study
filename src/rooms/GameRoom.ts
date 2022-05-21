@@ -1,4 +1,5 @@
 import { Room, Client } from "colyseus";
+import { InputFrameManager } from "../helpers/InputFrameManager";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { GameRoomState } from "./schema/GameRoomState";
 import { InputMessage } from "./schema/PlayerSchema";
@@ -34,19 +35,24 @@ export class GameRoom extends Room<GameRoomState> {
   private spawnPointX = 100;
   private spawnPoints: { [key: string]: PlayerInfo } = {};
 
+  private estimatedClientsFrame = 0;
+  private inputFrameManager: InputFrameManager;
+
   onCreate (options: ClientOptions) {
     this.world = new PhysicsWorld();
-    this.setState(new GameRoomState());
+    this.setState(new GameRoomState(STATIC_DELAY));
     this.setSimulationInterval((delta) => this.update(delta), TICK);
     this.setPatchRate(TICK);
     this.setupMessageHandlers();
     this.ownerId = options.localClientId;
+    this.inputFrameManager = new InputFrameManager(STATIC_DELAY, INPUT_WINDOW);
     console.log(`Room '${this.roomId}' created with owner '${this.ownerId}'`);
   }
 
   onJoin (client: Client, options: ClientOptions) {
     console.log(client.sessionId, "joined!");
     this.state.addPlayer(client.id, STATIC_DELAY, INPUT_WINDOW);
+    this.inputFrameManager.addPlayer(client.id);
     this.spawnPoints[client.id] = {
       id: client.id,
       position: { x: this.spawnPointX, y: 50 },
@@ -57,6 +63,7 @@ export class GameRoom extends Room<GameRoomState> {
   onLeave (client: Client, consented: boolean) {
     console.log(client.sessionId, "left!");
     this.state.removePlayer(client.id);
+    this.inputFrameManager.removePlayer(client.id);
     delete this.spawnPoints[client.id];
   }
 
@@ -67,9 +74,23 @@ export class GameRoom extends Room<GameRoomState> {
   update(delta: number) {
     if (this.started) {
       while (this.timeSinceLastUpdate >= TICK) {
-        this.world.update();
+        // if we confirm inputs from frame X, we can have state X+1
+        if (this.state.frame <= this.inputFrameManager.confirmedFrame) {
+          // const forced = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame);
+          // if (forced) {
+          //   // TODO copy last confirmed input
+          //   console.log('force input confirmation');
+          // }
 
-        this.state.frame += 1;
+          // TODO simulate server side and confirm state hash
+          // this.world.update();
+          this.state.frame += 1;
+        }
+
+        this.estimatedClientsFrame += 1;
+        // TODO check if estimated client frame is >= this.state.frame + rollbackWindow
+        // to confirm and start ignoring past inputs
+        // this.state.frame += 1;
         this.timeSinceLastUpdate -= TICK;
       }
   
@@ -88,6 +109,7 @@ export class GameRoom extends Room<GameRoomState> {
         console.log(`It should reject input from ${client.id}`);
       }
       this.state.players.get(client.id).setInput(input);
+      this.inputFrameManager.confirmInput(client.id, input.frame);
     });
 
     this.onMessage('checkOwnership', (client: Client, input: CheckOwnershipMessage) => {

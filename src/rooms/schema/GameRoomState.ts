@@ -3,7 +3,12 @@ import { PlayerSchema } from "./PlayerSchema";
 
 export class GameRoomState extends Schema {
   @type({ map: PlayerSchema }) players = new MapSchema<PlayerSchema>();
-  @type('number') frame = 0;
+  @type('number') frame;
+
+  constructor(frame: number) {
+    super();
+    this.frame = frame;
+  }
 
   addPlayer(id: string, staticDelay: number, window: number) {
     this.players.set(id, new PlayerSchema(id, staticDelay, window));
