@@ -7,12 +7,12 @@ const PING_KEY = 'ping';
 
 export class Application {
 
-  _app: PIXI.Application;
-  _overlay: PIXI.Container;
-  _sprites: { [id: string]: PIXI.Sprite } = {};
-  _gameObjects: GameObject[] = [];
-  _texts: { [id: string]: PIXI.BitmapText } = {};
-  private loaded = false;
+  private _app: PIXI.Application;
+  private _overlay: PIXI.Container;
+  private _sprites: { [id: string]: PIXI.Sprite } = {};
+  private _gameObjects: GameObject[] = [];
+  private _texts: { [id: string]: PIXI.BitmapText } = {};
+  private _loaded = false;
 
   constructor(width, height) {
     const app = new PIXI.Application({ width, height });
@@ -32,7 +32,7 @@ export class Application {
     app.loader.add('kenney', './static/fonts/Kenney-Future.xml').load(() => {
       this.addFrame();
       this.addPing();
-      this.loaded = true;
+      this._loaded = true;
     });
     this._app = app;
   }
@@ -42,16 +42,16 @@ export class Application {
   }
 
   set frame(arg: number) {
-    if (!this.loaded) return;
+    if (!this._loaded) return;
     this._texts[FRAME_KEY].text = `Frame: ${arg}`;
   }
 
   set ping(arg: number) {
-    if (!this.loaded) return;
+    if (!this._loaded) return;
     this._texts[PING_KEY].text = `Ping: ${arg} ms`;
   }
 
-  _ensureSprite(gameObject: GameObject) {
+  private _ensureSprite(gameObject: GameObject) {
     if (!(gameObject.id in this._sprites)) {
       const sprite = PIXI.Sprite.from('./static/happy-face.png');
       sprite.anchor.set(0.5, 0.5);
@@ -63,7 +63,7 @@ export class Application {
     }
   }
 
-  _renderGameObject(gameObject: GameObject) {
+  private _renderGameObject(gameObject: GameObject) {
     this._ensureSprite(gameObject);
 
     this._sprites[gameObject.id].position.set(gameObject.position.x, gameObject.position.y);
