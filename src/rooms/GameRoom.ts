@@ -33,7 +33,6 @@ export class GameRoom extends Room<GameRoomState> {
   private started = false;
   private spawnPointX = 100;
   private spawnPoints: { [key: string]: PlayerInfo } = {};
-  private frame = 0;
 
   onCreate (options: ClientOptions) {
     this.world = new PhysicsWorld();
@@ -68,7 +67,7 @@ export class GameRoom extends Room<GameRoomState> {
   update(delta: number) {
     if (this.started) {
       while (this.timeSinceLastUpdate >= TICK) {
-        this.frame += 1;
+        this.state.frame += 1;
         this.world.update();
   
         this.timeSinceLastUpdate -= TICK;
@@ -85,7 +84,7 @@ export class GameRoom extends Room<GameRoomState> {
 
     this.onMessage('input', (client: Client, input: InputMessage) => {
       // TODO block input with old frame, client send real frame instead of delayed
-      if (this.frame >= input.frame + INPUT_WINDOW) {
+      if (this.state.frame >= input.frame + INPUT_WINDOW) {
         console.log(`It should reject input from ${client.id}`);
       }
       this.state.players.get(client.id).setInput(input);
