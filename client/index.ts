@@ -17,8 +17,8 @@ let world: PhysicsWorld;
 let timeSinceLastUpdate = 0;
 let lastUpdate;
 let currentInput: RawInput;
-let playerId: string;
-let playerInputs: InputBuffer;
+let ownId: string;
+let ownInputs: InputBuffer;
 let frame;
 
 let updateTimer: NodeJS.Timer;
@@ -84,9 +84,9 @@ function connect() {
 function setup(id: string) {
   app = new Application(640, 360);
 
-  playerId = id;
+  ownId = id;
   frame = 0;
-  playerInputs = new InputBuffer(); 
+  ownInputs = new InputBuffer(); 
 
   ping = new Ping(() => {
     room.send('ping');
@@ -141,6 +141,8 @@ function handleKey(key: string, pressed: boolean) {
   }
 }
 
+let inputWarningCount = 21;
+
 function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
@@ -152,13 +154,15 @@ function update() {
     // TODO verify if own input has been rejected
     currentState.players.forEach(player => {
       const input = player.inputBuffer.inputs[frame % InputBuffer.SIZE];
-      if (input.frame !== frame) {
-        console.log(`Input has different frame (frame: ${frame}, input: ${input.frame})`);
+      if (input.frame !== frame && inputWarningCount > 20) {
+        console.log(`Input has different frame (own: ${player.id === ownId}, frame: ${frame}, input: ${input.frame})`);
+        inputWarningCount = 0;
       }
       world.applyInput(player.id, input);
     });
+    inputWarningCount += 1;
 
-    playerInputs.setInput(frame, currentInput);
+    ownInputs.setInput(frame, currentInput);
     room.send('input', { frame, ...currentInput });
     world.update();
 

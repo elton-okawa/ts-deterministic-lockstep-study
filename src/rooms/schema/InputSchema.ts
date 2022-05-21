@@ -8,9 +8,9 @@ export class InputSchema extends Schema {
   @type('boolean') right: boolean;
   @type('boolean') jump: boolean;
   
-  constructor() {
+  constructor(frame: number) {
     super();
-    this.frame = 0;
+    this.frame = frame;
     this.up = false;
     this.down = false;
     this.left = false;

@@ -21,7 +21,7 @@ export class InputBufferSchema extends Schema {
     this.window = window;
     this.inputs = new ArraySchema<InputSchema>(...Array.from(
       { length: this.window },
-      () => new InputSchema(),
+      (_, i) => new InputSchema(i),
     ));
   }
 

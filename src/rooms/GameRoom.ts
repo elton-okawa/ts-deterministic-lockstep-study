@@ -5,7 +5,7 @@ import { InputMessage } from "./schema/PlayerSchema";
 
 const TICK = 33.33; // ~30fps physics
 const STATIC_DELAY = 3;
-const INPUT_WINDOW = 10;
+const INPUT_WINDOW = 20;
 
 interface ClientOptions {
   localClientId: number;
@@ -67,9 +67,9 @@ export class GameRoom extends Room<GameRoomState> {
   update(delta: number) {
     if (this.started) {
       while (this.timeSinceLastUpdate >= TICK) {
-        this.state.frame += 1;
         this.world.update();
-  
+
+        this.state.frame += 1;
         this.timeSinceLastUpdate -= TICK;
       }
   
