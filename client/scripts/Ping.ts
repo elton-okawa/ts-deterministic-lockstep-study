@@ -8,7 +8,7 @@ export class Ping {
   private pinger: () => void;
 
   constructor(pinger: () => void) {
-    this.window = Array.from({ length: WINDOW_SIZE }, () => 0);
+    this.window = Array.from({ length: WINDOW_SIZE }, () => 50);
     this.counter = 0;
     this.pinger = pinger;
   }
