@@ -12,6 +12,7 @@ export class Application {
   _sprites: { [id: string]: PIXI.Sprite } = {};
   _gameObjects: GameObject[] = [];
   _texts: { [id: string]: PIXI.BitmapText } = {};
+  private loaded = false;
 
   constructor(width, height) {
     const app = new PIXI.Application({ width, height });
@@ -31,6 +32,7 @@ export class Application {
     app.loader.add('kenney', './static/fonts/Kenney-Future.xml').load(() => {
       this.addFrame();
       this.addPing();
+      this.loaded = true;
     });
     this._app = app;
   }
@@ -40,10 +42,12 @@ export class Application {
   }
 
   set frame(arg: number) {
+    if (!this.loaded) return;
     this._texts[FRAME_KEY].text = `Frame: ${arg}`;
   }
 
   set ping(arg: number) {
+    if (!this.loaded) return;
     this._texts[PING_KEY].text = `Ping: ${arg} ms`;
   }
 

@@ -91,7 +91,10 @@ function setup(id: string) {
   ping = new Ping(() => {
     room.send('ping');
   });
-  room.onMessage('pong', ping.handlePong.bind(ping));
+  room.onMessage('pong', () => {
+    ping.handlePong();
+    app.ping = ping.ping;
+  });
   ping.startPingRoutine();
 
   app.addWaitingForHost();
@@ -150,7 +153,6 @@ function update() {
     timeSinceLastUpdate -= FIXED_DELTA;
 
     app.frame = frame;
-    app.ping = ping.ping;
     // TODO verify if own input has been rejected
     currentState.players.forEach(player => {
       const input = player.inputBuffer.inputs[frame % InputBuffer.SIZE];

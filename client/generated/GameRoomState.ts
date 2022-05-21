@@ -10,4 +10,5 @@ import { PlayerSchema } from './PlayerSchema'
 
 export class GameRoomState extends Schema {
     @type({ map: PlayerSchema }) public players: MapSchema<PlayerSchema> = new MapSchema<PlayerSchema>();
+    @type("number") public frame!: number;
 }
