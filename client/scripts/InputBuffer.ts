@@ -1,7 +1,7 @@
 import { Input } from "./Input";
 
 const STATIC_DELAY = 3;
-const ROLLBACK_FRAMES = 7;
+const ROLLBACK_FRAMES = 17;
 
 export interface RawInput {
   up: boolean;

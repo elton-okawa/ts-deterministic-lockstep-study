@@ -10,10 +10,10 @@ export class PlayerSchema extends Schema {
   @type('string') id;
   @type(InputBufferSchema) inputBuffer;
 
-  constructor(id: string) {
+  constructor(id: string, staticDelay: number, window: number) {
     super();
     this.id = id;
-    this.inputBuffer = new InputBufferSchema();
+    this.inputBuffer = new InputBufferSchema(staticDelay, window);
   }
 
   setInput(inputMessage: InputMessage) {
@@ -22,5 +22,10 @@ export class PlayerSchema extends Schema {
 
   getInput(frame: number): InputSchema {
     return this.inputBuffer.getInput(frame);
+  }
+
+  copyInputFromTo(sourceFrame: number, targetFrame: number) {
+    const confirmedInput = this.inputBuffer.getInput(sourceFrame);
+    this.inputBuffer.setInput(targetFrame, confirmedInput);
   }
 }

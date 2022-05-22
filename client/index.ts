@@ -10,16 +10,19 @@ const localClientId = Date.now();
 let room: Colyseus.Room;
 
 const FIXED_DELTA = 33.33;
+const FRAME_FREQUENCY = 1 / FIXED_DELTA;
+const FPS = 60;
 
 let currentState: GameRoomState;
 let app: Application;
 let world: PhysicsWorld;
 let timeSinceLastUpdate = 0;
-let lastUpdate;
+let lastUpdate: number;
 let currentInput: RawInput;
-let playerId: string;
-let playerInputs: InputBuffer;
-let frame;
+let ownId: string;
+let ownInputs: InputBuffer;
+let frame: number;
+let framesAhead: number;
 
 let updateTimer: NodeJS.Timer;
 let isOwner = false;
@@ -58,14 +61,14 @@ function connect() {
       started = true;
     });
 
-    gameRoom.onMessage('pong', () => {
-
-    });
-
     // TODO perform static sync using gameRoom.state
     gameRoom.onStateChange(state => {
       // TODO compare state to rollback
+      // console.log(`Inputs: ${state.players.get(ownId).inputBuffer.inputs.map((input) => input.frame)}`)
       currentState = state;
+      const halfRTT = ping.ping / 2;
+      framesAhead = frame - (state.frame + halfRTT * FRAME_FREQUENCY);
+      // console.log(`frame: ${frame}, stateFrame: ${state.frame}, framesAhead: ${framesAhead}`);
     });
 
     gameRoom.onError((code: number, message: string) => {
@@ -88,15 +91,18 @@ function connect() {
 function setup(id: string) {
   app = new Application(640, 360);
 
-  playerId = id;
-  frame = 0;
-  playerInputs = new InputBuffer(); 
+  ownId = id;
+  frame = 1;
+  ownInputs = new InputBuffer(); 
 
   ping = new Ping(() => {
     room.send('ping');
   });
-  room.onMessage('pong', ping.handlePong.bind(ping));
-  ping.performPing();
+  room.onMessage('pong', () => {
+    ping.handlePong();
+    app.ping = ping.ping;
+  });
+  ping.startPingRoutine();
 
   app.addWaitingForHost();
 }
@@ -110,7 +116,7 @@ function start(playerInfos: PlayerInfo[]) {
   playerInfos.forEach(player => world.addPlayer(player.id, player.position));
 
   lastUpdate = Date.now();
-  updateTimer = setInterval(update, 16.67);
+  updateTimer = setInterval(update, 1000 / FPS);
   currentInput = {
     up: false,
     down: false,
@@ -145,21 +151,29 @@ function handleKey(key: string, pressed: boolean) {
   }
 }
 
+let inputWarningCount = 21;
+
 function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
-  while (timeSinceLastUpdate >= FIXED_DELTA) {
+  while (timeSinceLastUpdate >= FIXED_DELTA && frame < currentState.frame) {
     timeSinceLastUpdate -= FIXED_DELTA;
-
     app.frame = frame;
-    app.ping = ping.ping;
+
+    ownInputs.setInput(frame, currentInput);
+    room.send('input', { frame, ...currentInput });
+
     // TODO verify if own input has been rejected
     currentState.players.forEach(player => {
-      world.applyInput(player.id, player.inputBuffer.inputs[frame % InputBuffer.SIZE]);
+      const input = player.inputBuffer.inputs[frame % InputBuffer.SIZE];
+      // if (input.frame !== frame && inputWarningCount > 20) {
+      if (input.frame !== frame) {
+        console.log(`Input has different frame (own: ${player.id === ownId}, frame: ${frame}, input: ${input.frame})`);
+        inputWarningCount = 0;
+      }
+      world.applyInput(player.id, input);
     });
-
-    playerInputs.setInput(frame, currentInput);
-    room.send('input', { frame, ...currentInput });
+    inputWarningCount += 1;
     world.update();
 
     frame += 1;
