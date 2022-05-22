@@ -158,8 +158,11 @@ function update() {
   timeSinceLastUpdate += now - lastUpdate;
   while (timeSinceLastUpdate >= FIXED_DELTA && frame < currentState.frame) {
     timeSinceLastUpdate -= FIXED_DELTA;
-
     app.frame = frame;
+
+    ownInputs.setInput(frame, currentInput);
+    room.send('input', { frame, ...currentInput });
+
     // TODO verify if own input has been rejected
     currentState.players.forEach(player => {
       const input = player.inputBuffer.inputs[frame % InputBuffer.SIZE];
@@ -171,9 +174,6 @@ function update() {
       world.applyInput(player.id, input);
     });
     inputWarningCount += 1;
-
-    ownInputs.setInput(frame, currentInput);
-    room.send('input', { frame, ...currentInput });
     world.update();
 
     frame += 1;

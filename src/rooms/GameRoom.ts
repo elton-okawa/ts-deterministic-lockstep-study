@@ -78,7 +78,7 @@ export class GameRoom extends Room<GameRoomState> {
         const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame);
         if (forcedList) {
           console.log(`Forcing input confirmation, estimatedFrame ${this.estimatedClientsFrame}:\n${forcedList.map((forced) => `  id: ${forced.id}, lastConfirmedFrame: ${forced.lastConfirmedFrame}`).join('\n')}`);
-          forcedList.map(forced => this.state.players.get(forced.id).copyInputFromTo(forced.lastConfirmedFrame, this.estimatedClientsFrame - STATIC_DELAY));
+          forcedList.map(forced => this.state.players.get(forced.id).copyInputFromTo(forced.lastConfirmedFrame, forced.lastConfirmedFrame + 1 - STATIC_DELAY));
         }
 
         // if we confirm inputs from frame X, we can have state X+1
