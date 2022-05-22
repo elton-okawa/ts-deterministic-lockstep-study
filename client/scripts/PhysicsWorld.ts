@@ -14,78 +14,78 @@ const PLAYER_SIZE = { x: 50, y: 50 };
 
 export class PhysicsWorld {
 
-  world: RAPIER.World;
-  static: RAPIER.Collider[] = [];
-  bodies: RAPIER.RigidBody[] = [];
-  players: { [key: string]: RAPIER.RigidBody } = {};
+  private _world: RAPIER.World;
+  private _static: RAPIER.Collider[] = [];
+  private _bodies: RAPIER.RigidBody[] = [];
+  private _players: { [key: string]: RAPIER.RigidBody } = {};
 
-  staticObjs: { [key: string]: GameObject } = {};
-  bodyObjs: { [key: string]: GameObject } = {};
+  private _staticObjs: { [key: string]: GameObject } = {};
+  private _bodyObjs: { [key: string]: GameObject } = {};
 
   constructor() {
     console.log(`Using rapierjs version: ${RAPIER.version()}`);
 
     const gravity = { x: 0.0, y: 20 };
-    this.world = new RAPIER.World(gravity);
+    this._world = new RAPIER.World(gravity);
 
     this.init();
   }
 
   get staticInfo(): GameObject[] {
-    return Object.values(this.staticObjs);
+    return Object.values(this._staticObjs);
   }
 
   get bodyInfo(): GameObject[] {
-    [...this.bodies, ...Object.values(this.players)].map(body => {
+    [...this._bodies, ...Object.values(this._players)].map(body => {
       // all bodies has a single collider
-      const collider = this.world.getCollider(body.collider(0));
-      this.mutateColliderToGameObject(collider, this.bodyObjs[collider.handle]);
+      const collider = this._world.getCollider(body.collider(0));
+      this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
     });
 
-    return Object.values(this.bodyObjs);
+    return Object.values(this._bodyObjs);
   }
 
   init() {
     this.setupWalls();
-    const rigidBody = this.world.createRigidBody(
+    const rigidBody = this._world.createRigidBody(
       RAPIER.RigidBodyDesc.newDynamic().setTranslation(1.0, 0.0)
     );
 
     // Create a cuboid collider attached to the dynamic rigidBody.
     const colliderDesc = RAPIER.ColliderDesc.cuboid(0.25, 0.25);
-    const collider = this.world.createCollider(colliderDesc, rigidBody.handle);
+    const collider = this._world.createCollider(colliderDesc, rigidBody.handle);
 
-    this.bodies.push(rigidBody);
-    this.bodyObjs[collider.handle] = new GameObject();
-    this.mutateColliderToGameObject(collider, this.bodyObjs[collider.handle]);
+    this._bodies.push(rigidBody);
+    this._bodyObjs[collider.handle] = new GameObject();
+    this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
   }
 
   start() {}
 
   update() {
-    this.world.step();
+    this._world.step();
   }
 
   addPlayer(id: string, position: Vector) {
     const bodyDesc = RAPIER.RigidBodyDesc.newDynamic()
       .setTranslation(position.x / PHYSICS_SCALE, position.y / PHYSICS_SCALE);
-    const body = this.world.createRigidBody(bodyDesc);
+    const body = this._world.createRigidBody(bodyDesc);
 
     const colliderDesc = RAPIER.ColliderDesc
       .cuboid(PLAYER_SIZE.x / (PHYSICS_SCALE * 2), PLAYER_SIZE.y / (PHYSICS_SCALE * 2));
-    const collider = this.world.createCollider(colliderDesc, body.handle);
+    const collider = this._world.createCollider(colliderDesc, body.handle);
 
-    this.players[id] = body;
-    this.bodyObjs[collider.handle] = new GameObject();
-    this.mutateColliderToGameObject(collider, this.bodyObjs[collider.handle]);
+    this._players[id] = body;
+    this._bodyObjs[collider.handle] = new GameObject();
+    this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
   } 
 
   hasPlayer(id: string): boolean {
-    return id in this.players;
+    return id in this._players;
   }
 
   applyInput(id: string, input: Input) {
-    const player = this.players[id];
+    const player = this._players[id];
     // TODO maybe we should use setLinvel directly but adding gravity velocity
     player.setLinvel(this.limitVelocity(player.linvel()), true);
     player.applyForce(this.inputToVector(input), true);
@@ -118,25 +118,25 @@ export class PhysicsWorld {
 
   private setupWalls() {
     // Create the ground
-    const ground = this.world.createCollider(
+    const ground = this._world.createCollider(
       new RAPIER.ColliderDesc(new RAPIER.Cuboid(2.5, 0.3)).setTranslation(2.5, 3.3)
     );
-    const roof = this.world.createCollider(
+    const roof = this._world.createCollider(
       new RAPIER.ColliderDesc(new RAPIER.Cuboid(1, 0.3)).setTranslation(3, 0.3),
     );
 
-    const leftWall = this.world.createCollider(
+    const leftWall = this._world.createCollider(
       new RAPIER.ColliderDesc(new RAPIER.Cuboid(0.3, 4)).setTranslation(0.3, 2),
     );
-    const rightWall = this.world.createCollider(
+    const rightWall = this._world.createCollider(
       new RAPIER.ColliderDesc(new RAPIER.Cuboid(0.3, 4)).setTranslation(5.7, 2),
     );
 
-    this.static.push(ground, leftWall, rightWall, roof);
+    this._static.push(ground, leftWall, rightWall, roof);
 
-    this.static.forEach(st => {
-      this.staticObjs[st.handle] = new GameObject();
-      this.mutateColliderToGameObject(st, this.staticObjs[st.handle]);
+    this._static.forEach(st => {
+      this._staticObjs[st.handle] = new GameObject();
+      this.mutateColliderToGameObject(st, this._staticObjs[st.handle]);
     });
   }
 
