@@ -12,6 +12,7 @@ let room: Colyseus.Room;
 const FIXED_DELTA = 33.33;
 const FRAME_FREQUENCY = 1 / FIXED_DELTA;
 const FPS = 60;
+const ROLLBACK_WINDOW = 20;
 
 let currentState: GameRoomState;
 let app: Application;
@@ -111,7 +112,7 @@ function start(playerInfos: PlayerInfo[]) {
   app.tryRemoveStartButton();
   app.tryRemoveWaitingForHost();
 
-  world = new PhysicsWorld();
+  world = new PhysicsWorld(ROLLBACK_WINDOW);
 
   playerInfos.forEach(player => world.addPlayer(player.id, player.position));
 
@@ -174,7 +175,7 @@ function update() {
       world.applyInput(player.id, input);
     });
     inputWarningCount += 1;
-    world.update();
+    world.update(frame);
 
     frame += 1;
   }

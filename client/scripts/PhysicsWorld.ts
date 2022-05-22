@@ -4,13 +4,16 @@ rapier.init();
 
 const RAPIER = rapier as typeof RapierType;
 
-import { GameObject, Vector } from './GameObject';
+import { GameObject } from './GameObject';
 import { Input } from './Input';
+import { Vector } from './Vector';
+import { WorldSnapshot } from './WorldSnapshot';
 
 const PHYSICS_SCALE = 100;
 const FORCE_MULTIPLIER = 20;
 const MAX_HORIZONTAL_SPEED = 2;
 const PLAYER_SIZE = { x: 50, y: 50 };
+const MAX_BODIES = 10;
 
 export class PhysicsWorld {
 
@@ -21,12 +24,14 @@ export class PhysicsWorld {
 
   private _staticObjs: { [key: string]: GameObject } = {};
   private _bodyObjs: { [key: string]: GameObject } = {};
+  private _snapshots: WorldSnapshot[];
 
-  constructor() {
+  constructor(snapshotSize: number) {
     console.log(`Using rapierjs version: ${RAPIER.version()}`);
 
     const gravity = { x: 0.0, y: 20 };
     this._world = new RAPIER.World(gravity);
+    this._snapshots = Array.from({ length: snapshotSize }, () => new WorldSnapshot(MAX_BODIES));
 
     this.init();
   }
@@ -60,10 +65,14 @@ export class PhysicsWorld {
     this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
   }
 
-  start() {}
-
-  update() {
+  update(frame: number) {
     this._world.step();
+    this.takeSnapshot(frame);
+  }
+
+  private takeSnapshot(frame: number) {
+    this._snapshots[frame % this._snapshots.length]
+      .update(frame, this._bodies);
   }
 
   addPlayer(id: string, position: Vector) {
