@@ -21,9 +21,8 @@ export class InputBuffer {
   }
 
   setInput(frame: number, rawInput: RawInput) {
-    const targetFrame = frame + STATIC_DELAY;
-    const input = this.getInput(targetFrame);
-    input.frame = targetFrame;
+    const input = this.getInput(frame);
+    input.frame = frame;
     input.up = rawInput.up;
     input.down = rawInput.down;
     input.left = rawInput.left;

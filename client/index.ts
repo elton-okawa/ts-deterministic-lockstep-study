@@ -21,7 +21,8 @@ let timeSinceLastUpdate = 0;
 let lastUpdate: number;
 let currentInput: RawInput;
 let ownId: string;
-let ownInputs: InputBuffer;
+let predictedInputs: { [key: string]: InputBuffer };
+
 let frame: number;
 let framesAhead: number;
 
@@ -94,7 +95,6 @@ function setup(id: string) {
 
   ownId = id;
   frame = 1;
-  ownInputs = new InputBuffer(); 
 
   ping = new Ping(() => {
     room.send('ping');
@@ -113,8 +113,12 @@ function start(playerInfos: PlayerInfo[]) {
   app.tryRemoveWaitingForHost();
 
   world = new PhysicsWorld(ROLLBACK_WINDOW);
+  predictedInputs = {};
 
-  playerInfos.forEach(player => world.addPlayer(player.id, player.position));
+  playerInfos.forEach(player => {
+    world.addPlayer(player.id, player.position);
+    predictedInputs[player.id] = new InputBuffer();
+  });
 
   lastUpdate = Date.now();
   updateTimer = setInterval(update, 1000 / FPS);
@@ -161,7 +165,9 @@ function update() {
     timeSinceLastUpdate -= FIXED_DELTA;
     app.frame = frame;
 
-    ownInputs.setInput(frame, currentInput);
+    // ownInputs.setInput(frame, currentInput);
+    // get inputs -> if exist authoritative use it, if not use predicted
+
     room.send('input', { frame, ...currentInput });
 
     // TODO verify if own input has been rejected
