@@ -23,4 +23,9 @@ export class PlayerSchema extends Schema {
   getInput(frame: number): InputSchema {
     return this.inputBuffer.getInput(frame);
   }
+
+  copyInputFromTo(sourceFrame: number, targetFrame: number) {
+    const confirmedInput = this.inputBuffer.getInput(sourceFrame);
+    this.inputBuffer.setInput(targetFrame, confirmedInput);
+  }
 }

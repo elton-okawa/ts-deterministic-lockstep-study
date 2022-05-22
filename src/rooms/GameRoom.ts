@@ -76,11 +76,11 @@ export class GameRoom extends Room<GameRoomState> {
       while (this.timeSinceLastUpdate >= TICK) {
         // if we confirm inputs from frame X, we can have state X+1
         if (this.state.frame <= this.inputFrameManager.confirmedFrame) {
-          // const forced = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame);
-          // if (forced) {
-          //   // TODO copy last confirmed input
-          //   console.log('force input confirmation');
-          // }
+          const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame);
+          if (forcedList) {
+            console.log(`Forcing input confirmation, estimatedFrame ${this.estimatedClientsFrame}:\n${forcedList.map((forced) => `  id: ${forced.id}, lastConfirmedFrame: ${forced.lastConfirmedFrame}`).join('\n')}`);
+            forcedList.map(forced => this.state.players.get(forced.id).copyInputFromTo(forced.lastConfirmedFrame, this.estimatedClientsFrame - STATIC_DELAY));
+          }
 
           // TODO simulate server side and confirm state hash
           // this.world.update();
@@ -93,9 +93,8 @@ export class GameRoom extends Room<GameRoomState> {
         // this.state.frame += 1;
         this.timeSinceLastUpdate -= TICK;
       }
-  
-      this.timeSinceLastUpdate += delta;
     }
+    this.timeSinceLastUpdate += delta;
   }
 
   private setupMessageHandlers() {
