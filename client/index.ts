@@ -3,6 +3,7 @@ import { Application } from './scripts/Application';
 import { PhysicsWorld } from "./scripts/PhysicsWorld";
 import { InputBuffer, RawInput } from "./scripts/InputBuffer";
 import { Ping } from "./scripts/Ping";
+import { InputManager } from "./scripts/InputManager";
 
 const client = new Colyseus.Client('ws://localhost:2567');
 const localClientId = Date.now();
@@ -21,9 +22,9 @@ let timeSinceLastUpdate = 0;
 let lastUpdate: number;
 let currentInput: RawInput;
 let ownId: string;
-let predictedInputs: { [key: string]: InputBuffer };
+let inputManager: InputManager;
 
-let frame: number;
+let currentFrame: number;
 let framesAhead: number;
 
 let updateTimer: NodeJS.Timer;
@@ -44,6 +45,7 @@ function connect() {
   client.joinOrCreate<GameRoomState>('game_room', { localClientId }).then(gameRoom => {
     console.log(gameRoom.sessionId, 'joined', gameRoom.name);
     room = gameRoom;
+    currentState = room.state;
 
     gameRoom.onMessage('checkOwnership', (message: CheckOwnershipMessage) => {
       isOwner = message.isOwner;
@@ -69,7 +71,7 @@ function connect() {
       // console.log(`Inputs: ${state.players.get(ownId).inputBuffer.inputs.map((input) => input.frame)}`)
       currentState = state;
       const halfRTT = ping.ping / 2;
-      framesAhead = frame - (state.frame + halfRTT * FRAME_FREQUENCY);
+      framesAhead = currentFrame - (state.frame + halfRTT * FRAME_FREQUENCY);
       // console.log(`frame: ${frame}, stateFrame: ${state.frame}, framesAhead: ${framesAhead}`);
     });
 
@@ -94,7 +96,7 @@ function setup(id: string) {
   app = new Application(640, 360);
 
   ownId = id;
-  frame = 1;
+  currentFrame = 1;
 
   ping = new Ping(() => {
     room.send('ping');
@@ -113,11 +115,17 @@ function start(playerInfos: PlayerInfo[]) {
   app.tryRemoveWaitingForHost();
 
   world = new PhysicsWorld(ROLLBACK_WINDOW);
-  predictedInputs = {};
+  inputManager = new InputManager();
 
   playerInfos.forEach(player => {
     world.addPlayer(player.id, player.position);
-    predictedInputs[player.id] = new InputBuffer();
+    inputManager.addPlayer(player.id);
+  });
+
+  currentState.players.forEach(player => {
+    player.inputBuffer.inputs.onChange = (input) => {
+      inputManager.confirmInput(input.frame, player.id, input);
+    };
   });
 
   lastUpdate = Date.now();
@@ -156,39 +164,50 @@ function handleKey(key: string, pressed: boolean) {
   }
 }
 
-let inputWarningCount = 21;
-
 function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
-  while (timeSinceLastUpdate >= FIXED_DELTA && frame < currentState.frame) {
+  // while (timeSinceLastUpdate >= FIXED_DELTA && currentFrame < currentState.frame) {
+
+  while (timeSinceLastUpdate >= FIXED_DELTA) {
     timeSinceLastUpdate -= FIXED_DELTA;
-    app.frame = frame;
+    app.frame = currentFrame;
 
-    // ownInputs.setInput(frame, currentInput);
-    // get inputs -> if exist authoritative use it, if not use predicted
+    if (inputManager.shouldRollback) {
+      rollback(inputManager.rollbackFromFrame, currentFrame);
+      inputManager.rollbackPerformed();
+    }
 
-    room.send('input', { frame, ...currentInput });
+    // TODO use own input
+    room.send('input', { frame: currentFrame, ...currentInput });
 
-    // TODO verify if own input has been rejected
-    currentState.players.forEach(player => {
-      const input = player.inputBuffer.inputs[frame % InputBuffer.SIZE];
-      // if (input.frame !== frame && inputWarningCount > 20) {
-      if (input.frame !== frame) {
-        console.log(`Input has different frame (own: ${player.id === ownId}, frame: ${frame}, input: ${input.frame})`);
-        inputWarningCount = 0;
-      }
-      world.applyInput(player.id, input);
-    });
-    inputWarningCount += 1;
-    world.update(frame);
+    simulateFrame(currentFrame);
 
-    frame += 1;
+    currentFrame += 1;
   }
 
   app.gameObjects = [...world.staticInfo, ...world.bodyInfo];
   app.render();
   lastUpdate = now;
+}
+
+// [startFrame, endFrame[
+function rollback(startFrame: number, endFrame: number) {
+  console.log(`Rollback from '${startFrame}' to '${endFrame}'`)
+  
+  // restore world
+  for (let frame = startFrame; frame < endFrame; frame++) {
+    simulateFrame(frame);
+  }
+}
+
+function simulateFrame(frame: number) {
+  currentState.players.forEach(player => {
+    const input = inputManager.getInput(frame, player.id);
+    world.applyInput(player.id, input);
+  });
+
+  world.update(frame);
 }
 
 connect();

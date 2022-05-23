@@ -1,4 +1,4 @@
-export class Input {
+export interface Input {
   frame: number;
   up: boolean;
   down: boolean;
@@ -6,24 +6,16 @@ export class Input {
   right: boolean;
   jump: boolean;
 
-  constructor() {
-    this.frame = 0;
-    this.up = false;
-    this.down = false;
-    this.left = false;
-    this.right = false;
-    this.jump = false;
+}
+
+export function inputEquals(first: Input, second: Input): boolean {
+  if (first.frame !== second.frame) {
+    console.warn(`Comparing inputs from different frames (current: ${first.frame}, other: ${first.frame})`);
   }
 
-  equals(other: Input) {
-    if (this.frame !== other.frame) {
-      console.warn(`Comparing inputs from different frames (current: ${this.frame}, other: ${this.frame})`);
-    }
-
-    return this.up === other.up &&
-      this.down === other.down &&
-      this.left === other.left &&
-      this.right === other.right &&
-      this.jump === other.jump;
-  }
+  return first.up === second.up &&
+    first.down === second.down &&
+    first.left === second.left &&
+    first.right === second.right &&
+    first.jump === second.jump;
 }
