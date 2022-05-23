@@ -13,11 +13,16 @@ interface PredictedInputInfo {
 
 export class InputManager {
 
+  private _ownId: string;
   private _predicted: { [key: string]: PredictedInputInfo } = {};
   private _authoritative: { [key: string]: InputInfo } = {};
   private _needRollback: boolean = false;
   private _rollbackFromFrame = 0;
   private _lastCompleteFrame = -1;
+
+  constructor(ownId: string) {
+    this._ownId = ownId;
+  }
 
   get shouldRollback(): boolean {
     return this._needRollback && this._rollbackFromFrame <= this._lastCompleteFrame;
@@ -48,11 +53,17 @@ export class InputManager {
     delete this._authoritative[playerId];
   }
 
+  setOwnInput(frame: number, input: Input) {
+    this._predicted[this._ownId].buffer.setInput(frame, input);
+  }
+
   getInput(frame: number, playerId: string): Input {
     const auth = this._authoritative[playerId]; 
     if (auth.last <= frame) {
       this._predicted[playerId].confirmed = frame;
       return auth.buffer.getInput(frame);
+    } else if (playerId === this._ownId) {
+      return this._predicted[playerId].buffer.getInput(frame);
     } else {
       const lastAuth = auth.buffer.getInput(auth.last);
       this._predicted[playerId].buffer.setInput(frame, lastAuth);

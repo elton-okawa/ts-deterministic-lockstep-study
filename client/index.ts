@@ -1,9 +1,9 @@
 import { GameRoomState } from "./generated/GameRoomState";
 import { Application } from './scripts/Application';
 import { PhysicsWorld } from "./scripts/PhysicsWorld";
-import { InputBuffer, RawInput } from "./scripts/InputBuffer";
 import { Ping } from "./scripts/Ping";
 import { InputManager } from "./scripts/InputManager";
+import { Input } from "./scripts/Input";
 
 const client = new Colyseus.Client('ws://localhost:2567');
 const localClientId = Date.now();
@@ -20,7 +20,7 @@ let app: Application;
 let world: PhysicsWorld;
 let timeSinceLastUpdate = 0;
 let lastUpdate: number;
-let currentInput: RawInput;
+let currentInput: Input;
 let ownId: string;
 let inputManager: InputManager;
 
@@ -115,7 +115,7 @@ function start(playerInfos: PlayerInfo[]) {
   app.tryRemoveWaitingForHost();
 
   world = new PhysicsWorld(ROLLBACK_WINDOW);
-  inputManager = new InputManager();
+  inputManager = new InputManager(ownId);
 
   playerInfos.forEach(player => {
     world.addPlayer(player.id, player.position);
@@ -131,6 +131,7 @@ function start(playerInfos: PlayerInfo[]) {
   lastUpdate = Date.now();
   updateTimer = setInterval(update, 1000 / FPS);
   currentInput = {
+    frame: currentFrame,
     up: false,
     down: false,
     left: false,
@@ -178,8 +179,9 @@ function update() {
       inputManager.rollbackPerformed();
     }
 
-    // TODO use own input
-    room.send('input', { frame: currentFrame, ...currentInput });
+    currentInput.frame = currentFrame;
+    inputManager.setOwnInput(currentFrame, currentInput);
+    room.send('input', currentInput);
 
     simulateFrame(currentFrame);
 
