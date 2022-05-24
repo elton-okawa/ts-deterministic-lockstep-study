@@ -57,11 +57,14 @@ export class InputManager {
     this._predicted[this._ownId].buffer.setInput(frame, input);
   }
 
+  // FIX think if we should confirm or not here
   getInput(frame: number, playerId: string): Input {
     const auth = this._authoritative[playerId]; 
     if (auth.last <= frame) {
-      this._predicted[playerId].confirmed = frame;
-      return auth.buffer.getInput(frame);
+      const authInput = auth.buffer.getInput(frame);
+      // this._predicted[playerId].confirmed = frame;
+      // this._predicted[playerId].buffer.setInput(frame, authInput);
+      return authInput;
     } else if (playerId === this._ownId) {
       return this._predicted[playerId].buffer.getInput(frame);
     } else {

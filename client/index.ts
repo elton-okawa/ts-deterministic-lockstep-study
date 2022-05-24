@@ -123,9 +123,19 @@ function start(playerInfos: PlayerInfo[]) {
   });
 
   currentState.players.forEach(player => {
-    player.inputBuffer.inputs.onChange = (input) => {
-      inputManager.confirmInput(input.frame, player.id, input);
-    };
+    player.inputBuffer.inputs.forEach(inputSchema => {
+      // FIX it seems that there is a problem in the logic
+      // changes appear to be in order
+      // There is the following order <current> <previous>
+      // - 50 10
+      // - 51 11
+      // - 32 12
+      // - 33 13
+      inputSchema.onChange = (changes: any[]) => { 
+        console.log(`${player.id}: ${JSON.stringify(changes)}`);
+        // inputManager.confirmInput(inputSchema.frame, player.id, inputSchema);
+      }
+    });
   });
 
   lastUpdate = Date.now();
@@ -179,8 +189,10 @@ function update() {
       inputManager.rollbackPerformed();
     }
 
+    // TODO Static delay is not applied by input buffer on client
+    currentInput.frame = currentFrame + 3;
+    inputManager.setOwnInput(currentFrame + 3, currentInput);
     currentInput.frame = currentFrame;
-    inputManager.setOwnInput(currentFrame, currentInput);
     room.send('input', currentInput);
 
     simulateFrame(currentFrame);

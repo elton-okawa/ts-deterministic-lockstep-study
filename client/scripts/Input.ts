@@ -10,7 +10,7 @@ export interface Input {
 
 export function inputEquals(first: Input, second: Input): boolean {
   if (first.frame !== second.frame) {
-    console.warn(`Comparing inputs from different frames (current: ${first.frame}, other: ${first.frame})`);
+    console.warn(`Comparing inputs from different frames (current: ${first.frame}, other: ${second.frame})`);
   }
 
   return first.up === second.up &&
