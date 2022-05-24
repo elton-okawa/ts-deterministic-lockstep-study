@@ -1,7 +1,7 @@
 import { Vector } from "./Vector";
 
 interface BodySnapshot {
-  id: number;
+  handle: number;
   valid: boolean;
   position: Vector;
   rotation: number;
@@ -18,7 +18,7 @@ export class WorldSnapshot {
     this._bodies = Array.from(
       { length: bodiesSize },
       () => ({
-        id: -1,
+        handle: -1,
         valid: false,
         position: { x: 0, y: 0 },
         rotation: 0,
@@ -28,28 +28,35 @@ export class WorldSnapshot {
     );
   }
 
-  update(frame: number, bodies: RAPIER.RigidBody[]) {
+  get frame(): number {
+    return this._frame;
+  }
+
+  get bodies(): BodySnapshot[] {
+    return this._bodies;
+  }
+
+  update(frame: number, bodies: IterableIterator<RAPIER.RigidBody>) {
     this._frame = frame;
     this._bodies.forEach(body => body.valid = false);
 
-    if (this._bodies.length >= bodies.length) {
-      for (let i = 0; i < bodies.length; i++) {
-        const body = this._bodies[i];
-        const physics = bodies[i];
-        const translation = physics.translation();
-        const linearVelocity = physics.linvel();
-
-        body.valid = true;
-        body.id = physics.handle;
-        body.position.x = translation.x;
-        body.position.y = translation.y;
-        body.rotation = physics.rotation();
-        body.linearVelocity.x = linearVelocity.x;
-        body.linearVelocity.y = linearVelocity.y;
-        body.angularVelocity = physics.angvel();
+    let index = 0;
+    for (const physics of bodies) {
+      if (index >= this._bodies.length) {
+        console.error(`There are more bodies than snapshot supports (physicsBodies: ${index}, snapshot: ${this._bodies.length}), aborting in the middle`);
+        return;
       }
-    } else {
-      console.error(`There are more bodies than snapshot supports (physicsBodies: ${bodies.length}, snapshot: ${this._bodies.length})`);
+
+      const body = this._bodies[index];
+
+      body.valid = true;
+      body.handle = physics.handle;
+      body.position = physics.translation();
+      body.rotation = physics.rotation();
+      body.linearVelocity = physics.linvel();
+      body.angularVelocity = physics.angvel();
+
+      index += 1;
     }
   }
 }

@@ -19,7 +19,7 @@ export class PhysicsWorld {
 
   private _world: RAPIER.World;
   private _static: RAPIER.Collider[] = [];
-  private _bodies: RAPIER.RigidBody[] = [];
+  private _bodies = new Map<number, RAPIER.RigidBody>();
   private _players: { [key: string]: RAPIER.RigidBody } = {};
 
   private _staticObjs: { [key: string]: GameObject } = {};
@@ -41,11 +41,11 @@ export class PhysicsWorld {
   }
 
   get bodyInfo(): GameObject[] {
-    [...this._bodies, ...Object.values(this._players)].map(body => {
+    for (const body of this._bodies.values()) {
       // all bodies has a single collider
       const collider = this._world.getCollider(body.collider(0));
       this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
-    });
+    }
 
     return Object.values(this._bodyObjs);
   }
@@ -60,7 +60,7 @@ export class PhysicsWorld {
     const colliderDesc = RAPIER.ColliderDesc.cuboid(0.25, 0.25);
     const collider = this._world.createCollider(colliderDesc, rigidBody.handle);
 
-    this._bodies.push(rigidBody);
+    this._bodies.set(rigidBody.handle, rigidBody);
     this._bodyObjs[collider.handle] = new GameObject();
     this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
   }
@@ -72,7 +72,22 @@ export class PhysicsWorld {
 
   private takeSnapshot(frame: number) {
     this._snapshots[frame % this._snapshots.length]
-      .update(frame, this._bodies);
+      .update(frame, this._bodies.values());
+  }
+
+  restore(frame: number) {
+    const snapshot = this._snapshots[frame % this._snapshots.length];
+    if (snapshot.frame !== frame) {
+      console.warn(`Restoring snapshot with different frame (snapshot: ${snapshot.frame}, frame: ${frame})`);
+    }
+
+    snapshot.bodies.forEach(body => {
+      const physics = this._bodies.get(body.handle);
+      physics.setTranslation(body.position, false);
+      physics.setRotation(body.rotation, false);
+      physics.setLinvel(body.linearVelocity, false);
+      physics.setAngvel(body.angularVelocity, false);
+    });
   }
 
   addPlayer(id: string, position: Vector) {
@@ -85,9 +100,15 @@ export class PhysicsWorld {
     const collider = this._world.createCollider(colliderDesc, body.handle);
 
     this._players[id] = body;
+    this._bodies.set(body.handle, body);
     this._bodyObjs[collider.handle] = new GameObject();
     this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
-  } 
+  }
+
+  removePlayer(id: string) {
+    // remove from this._players
+    // remove from this._bodies
+  }
 
   hasPlayer(id: string): boolean {
     return id in this._players;

@@ -197,7 +197,8 @@ function update() {
 function rollback(startFrame: number, endFrame: number) {
   console.log(`Rollback from '${startFrame}' to '${endFrame}'`)
   
-  // restore world
+  world.restore(startFrame);
+
   for (let frame = startFrame; frame < endFrame; frame++) {
     simulateFrame(frame);
   }
