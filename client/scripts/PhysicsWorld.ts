@@ -81,13 +81,16 @@ export class PhysicsWorld {
       console.warn(`Restoring snapshot with different frame (snapshot: ${snapshot.frame}, frame: ${frame})`);
     }
 
-    snapshot.bodies.forEach(body => {
-      const physics = this._bodies.get(body.handle);
-      physics.setTranslation(body.position, false);
-      physics.setRotation(body.rotation, false);
-      physics.setLinvel(body.linearVelocity, false);
-      physics.setAngvel(body.angularVelocity, false);
-    });
+    snapshot.bodies
+      .filter(body => body.valid)
+      .forEach(body => {
+        const physics = this._bodies.get(body.handle);
+        physics.setTranslation(body.position, false);
+        physics.setRotation(body.rotation, false);
+        physics.setLinvel(body.linearVelocity, false);
+        physics.setAngvel(body.angularVelocity, false);
+      }
+    );
   }
 
   addPlayer(id: string, position: Vector) {
