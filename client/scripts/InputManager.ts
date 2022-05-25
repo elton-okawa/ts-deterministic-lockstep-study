@@ -75,7 +75,7 @@ export class InputManager {
   }
 
   confirmInput(frame: number, playerId: string, input: Input) {
-    console.log(`[${playerId}] confirmInput: ${frame}`);
+    // console.log(`[${playerId}] confirmInput: ${frame}`);
     this._authoritative[playerId].last = frame;
     this._authoritative[playerId].buffer.setInput(frame, input);
     this.tryToSetLastCompleteFrame();

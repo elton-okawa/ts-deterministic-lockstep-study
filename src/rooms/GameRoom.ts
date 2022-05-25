@@ -74,7 +74,8 @@ export class GameRoom extends Room<GameRoomState> {
   update(delta: number) {
     // wait first input confirmation to start simulating -> think about
     // because if someone crashes, it'll be stuck forever
-    if (this.started && this.inputFrameManager.confirmedFrame > STATIC_DELAY) {
+    // if (this.started && this.inputFrameManager.confirmedFrame > STATIC_DELAY) {
+    if (this.started) {
       while (this.timeSinceLastUpdate >= TICK) {
         const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame);
         if (forcedList) {
