@@ -96,6 +96,7 @@ function setup(id: string) {
   app = new Application(640, 360);
 
   ownId = id;
+  console.log(`OwnId: ${ownId}`);
   currentFrame = 1;
 
   ping = new Ping(() => {
@@ -184,7 +185,7 @@ function update() {
 
     // TODO Static delay is not applied by input buffer on client
     currentInput.frame = currentFrame + 3;
-    inputManager.setOwnInput(currentFrame + 3, currentInput);
+    inputManager.setOwnInput(currentInput.frame, currentInput);
     currentInput.frame = currentFrame;
     room.send('input', currentInput);
 

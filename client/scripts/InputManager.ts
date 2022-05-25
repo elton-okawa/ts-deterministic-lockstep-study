@@ -54,11 +54,12 @@ export class InputManager {
   }
 
   setOwnInput(frame: number, input: Input) {
+    // console.log(`[${this._ownId}] setOwnInput: ${frame}`);
     this._predicted[this._ownId].buffer.setInput(frame, input);
   }
 
-  // FIX think if we should confirm or not here
   getInput(frame: number, playerId: string): Input {
+    // console.log(`[${playerId}] getInput: ${frame}`);
     const auth = this._authoritative[playerId]; 
     if (auth.last <= frame) {
       const authInput = auth.buffer.getInput(frame);
@@ -74,6 +75,7 @@ export class InputManager {
   }
 
   confirmInput(frame: number, playerId: string, input: Input) {
+    console.log(`[${playerId}] confirmInput: ${frame}`);
     this._authoritative[playerId].last = frame;
     this._authoritative[playerId].buffer.setInput(frame, input);
     this.tryToSetLastCompleteFrame();

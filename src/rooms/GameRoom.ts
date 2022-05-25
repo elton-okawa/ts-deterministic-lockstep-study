@@ -87,6 +87,7 @@ export class GameRoom extends Room<GameRoomState> {
           // TODO simulate server side and confirm state hash
           // this.world.update();
           this.state.frame += 1;
+          console.log(`Server: ${this.state.frame}, clientEstimated: ${this.estimatedClientsFrame}`);
         }
 
         this.estimatedClientsFrame += 1;
