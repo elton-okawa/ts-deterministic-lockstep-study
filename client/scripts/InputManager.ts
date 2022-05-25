@@ -8,6 +8,7 @@ interface InputInfo {
 
 interface PredictedInputInfo {
   confirmed: number;
+  lastUsed: number;
   buffer: InputBuffer;
 }
 
@@ -39,6 +40,7 @@ export class InputManager {
   addPlayer(playerId: string) {
     this._predicted[playerId] = { 
       confirmed: 0,
+      lastUsed: 0,
       buffer: new InputBuffer(),
     };
 
@@ -79,6 +81,10 @@ export class InputManager {
     this._authoritative[playerId].last = frame;
     this._authoritative[playerId].buffer.setInput(frame, input);
     this.tryToSetLastCompleteFrame();
+
+    if (this._predicted[playerId].lastUsed < frame) {
+      return;
+    }
 
     if (this._predicted[playerId].confirmed < frame) {
       const predictedInput = this._predicted[playerId].buffer.getInput(frame);
