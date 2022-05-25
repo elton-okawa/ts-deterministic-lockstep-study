@@ -62,9 +62,11 @@ export class InputManager {
 
   getInput(frame: number, playerId: string): Input {
     // console.log(`[${playerId}] getInput: ${frame}`);
-    const auth = this._authoritative[playerId]; 
-    if (auth.last <= frame) {
+    const auth = this._authoritative[playerId];
+    this._predicted[playerId].lastUsed = frame;
+    if (auth.last >= frame) {
       const authInput = auth.buffer.getInput(frame);
+      this._predicted[playerId].confirmed = frame;
       this._predicted[playerId].buffer.setInput(frame, authInput);
       return authInput;
     } else if (playerId === this._ownId) {
