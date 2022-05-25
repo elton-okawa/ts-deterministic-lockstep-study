@@ -25,7 +25,6 @@ let ownId: string;
 let inputManager: InputManager;
 
 let currentFrame: number;
-let framesAhead: number;
 
 let updateTimer: NodeJS.Timer;
 let isOwner = false;
@@ -71,7 +70,7 @@ function connect() {
       // console.log(`Inputs: ${state.players.get(ownId).inputBuffer.inputs.map((input) => input.frame)}`)
       currentState = state;
       const halfRTT = ping.ping / 2;
-      framesAhead = currentFrame - (state.frame + halfRTT * FRAME_FREQUENCY);
+      app.frameDiff = currentFrame - (state.frame + halfRTT * FRAME_FREQUENCY);
       // console.log(`frame: ${frame}, stateFrame: ${state.frame}, framesAhead: ${framesAhead}`);
     });
 
