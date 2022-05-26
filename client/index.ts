@@ -168,6 +168,8 @@ function handleKey(key: string, pressed: boolean) {
   }
 }
 
+let debug_countRollback = 0;
+
 function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
@@ -181,6 +183,13 @@ function update() {
       rollback(inputManager.rollbackFromFrame, currentFrame);
       inputManager.rollbackPerformed();
     }
+
+    // if (currentFrame > 20 && debug_countRollback > 10) {
+    //   rollback(currentFrame - 10, currentFrame);
+    //   inputManager.rollbackPerformed();
+    //   debug_countRollback = 0; 
+    // }
+    // debug_countRollback += 1;
 
     // TODO Static delay is not applied by input buffer on client
     currentInput.frame = currentFrame + 3;

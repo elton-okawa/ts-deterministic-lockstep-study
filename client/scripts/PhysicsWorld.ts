@@ -25,6 +25,7 @@ export class PhysicsWorld {
   private _staticObjs: { [key: string]: GameObject } = {};
   private _bodyObjs: { [key: string]: GameObject } = {};
   private _snapshots: WorldSnapshot[];
+  private _rapierSnapshots: any[];
 
   constructor(snapshotSize: number) {
     console.log(`Using rapierjs version: ${RAPIER.version()}`);
@@ -32,6 +33,7 @@ export class PhysicsWorld {
     const gravity = { x: 0.0, y: 20 };
     this._world = new RAPIER.World(gravity);
     this._snapshots = Array.from({ length: snapshotSize }, () => new WorldSnapshot(MAX_BODIES));
+    this._rapierSnapshots = Array.from({length: snapshotSize});
 
     this.init();
   }
@@ -53,7 +55,7 @@ export class PhysicsWorld {
   init() {
     this.setupWalls();
     const rigidBody = this._world.createRigidBody(
-      RAPIER.RigidBodyDesc.newDynamic().setTranslation(1.0, 0.0)
+      RAPIER.RigidBodyDesc.newDynamic().setTranslation(3.0, 2.0)
     );
 
     // Create a cuboid collider attached to the dynamic rigidBody.
@@ -73,9 +75,12 @@ export class PhysicsWorld {
   private takeSnapshot(frame: number) {
     this._snapshots[frame % this._snapshots.length]
       .update(frame, this._bodies.values());
+    // this._rapierSnapshots[frame % this._rapierSnapshots.length] = this._world.takeSnapshot();
   }
 
   restore(frame: number) {
+    // FIX rapier function recreate world, so we lost bodies reference
+    // this._world = RAPIER.World.restoreSnapshot(this._rapierSnapshots[frame % this._rapierSnapshots.length]);
     const snapshot = this._snapshots[frame % this._snapshots.length];
     if (snapshot.frame !== frame) {
       console.warn(`Restoring snapshot with different frame (snapshot: ${snapshot.frame}, frame: ${frame})`);
@@ -85,10 +90,10 @@ export class PhysicsWorld {
       .filter(body => body.valid)
       .forEach(body => {
         const physics = this._bodies.get(body.handle);
-        physics.setTranslation(body.position, false);
-        physics.setRotation(body.rotation, false);
-        physics.setLinvel(body.linearVelocity, false);
-        physics.setAngvel(body.angularVelocity, false);
+        physics.setTranslation(body.position, true);
+        physics.setRotation(body.rotation, true);
+        physics.setLinvel(body.linearVelocity, true);
+        physics.setAngvel(body.angularVelocity, true);
       }
     );
   }

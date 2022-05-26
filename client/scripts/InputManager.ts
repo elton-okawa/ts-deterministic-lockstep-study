@@ -19,14 +19,14 @@ export class InputManager {
   private _authoritative: { [key: string]: InputInfo } = {};
   private _needRollback: boolean = false;
   private _rollbackFromFrame = 0;
-  private _lastCompleteFrame = -1;
+  private _lastCompleteFrame = -1; // FIX should we really need this?
 
   constructor(ownId: string) {
     this._ownId = ownId;
   }
 
   get shouldRollback(): boolean {
-    return this._needRollback && this._rollbackFromFrame <= this._lastCompleteFrame;
+    return this._needRollback;
   }
 
   get rollbackFromFrame(): number {
@@ -125,7 +125,8 @@ export class InputManager {
 
     if (!this._needRollback) {
       this._needRollback = true;
-      this._rollbackFromFrame = minConfirmed + 1;
+      // FIX I think that we can rollback from min + 1, but we'll leave as it is for now
+      this._rollbackFromFrame = minConfirmed;
     }
   }
 }
