@@ -12,6 +12,24 @@ interface PredictedInputInfo {
   buffer: InputBuffer;
 }
 
+/**
+ * Possible cases
+ * 
+ * 1. Input arrives before usage
+ * - Input arrives, mark that we have the authoritative input for frame X
+ * - Game request input X, as we have the authoritative one, return it
+ * 
+ * 2. Input arrives after usage
+ * - Game request input X, we do not have it
+ * - Mark predicted input and return it
+ * - Input X arrives
+ * 
+ * 2.1. Input X is the same as predicted
+ * - Mark that our prediction was correct
+ * 
+ * 2.2. Input X is not the same
+ * - Mark that a rollback is needed starting from frame X
+ */
 export class InputManager {
 
   private _ownId: string;
@@ -19,14 +37,15 @@ export class InputManager {
   private _authoritative: { [key: string]: InputInfo } = {};
   private _needRollback: boolean = false;
   private _rollbackFromFrame = 0;
-  private _lastCompleteFrame = -1; // FIX should we really need this?
+  private _lastCompleteFrame = -1;
 
   constructor(ownId: string) {
     this._ownId = ownId;
   }
 
+  // only rollback after we have all authoritative inputs from that frame
   get shouldRollback(): boolean {
-    return this._needRollback;
+    return this._needRollback && this._rollbackFromFrame <= this._lastCompleteFrame;
   }
 
   get rollbackFromFrame(): number {
@@ -66,6 +85,9 @@ export class InputManager {
     this._predicted[playerId].lastUsed = frame;
     if (auth.last >= frame) {
       const authInput = auth.buffer.getInput(frame);
+      if (this._predicted[playerId].confirmed > frame) {
+        console.warn(`Going back confirmed input (current: ${this._predicted[playerId].confirmed}, received: ${frame})`)
+      }
       this._predicted[playerId].confirmed = frame;
       this._predicted[playerId].buffer.setInput(frame, authInput);
       return authInput;
