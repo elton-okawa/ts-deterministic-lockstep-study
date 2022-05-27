@@ -85,11 +85,11 @@ export class InputManager {
     this._predicted[playerId].lastUsed = frame;
     if (auth.last >= frame) {
       const authInput = auth.buffer.getInput(frame);
-      if (this._predicted[playerId].confirmed > frame) {
-        console.warn(`Going back confirmed input (current: ${this._predicted[playerId].confirmed}, received: ${frame})`)
-      }
-      this._predicted[playerId].confirmed = frame;
-      this._predicted[playerId].buffer.setInput(frame, authInput);
+      // if (this._predicted[playerId].confirmed > frame) {
+      //   console.warn(`Going back confirmed input (current: ${this._predicted[playerId].confirmed}, received: ${frame})`)
+      // }
+      // this._predicted[playerId].confirmed = frame;
+      // this._predicted[playerId].buffer.setInput(frame, authInput);
       return authInput;
     } else if (playerId === this._ownId) {
       return this._predicted[playerId].buffer.getInput(frame);
@@ -114,6 +114,8 @@ export class InputManager {
       const predictedInput = this._predicted[playerId].buffer.getInput(frame);
       if (!inputEquals(predictedInput, input)) {
         this.tryToSetRollbackFrame();
+        this._predicted[playerId].buffer.setInput(frame, input);
+        this._predicted[playerId].confirmed = frame;
       } else {
         this._predicted[playerId].confirmed = frame;
       }
