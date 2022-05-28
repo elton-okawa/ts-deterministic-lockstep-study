@@ -1,9 +1,5 @@
 import { InputBuffer } from "./InputBuffer";
-
-export interface Vector {
-  x: number;
-  y: number;
-}
+import { Vector } from "./Vector";
 
 export class GameObject {
   id: number;

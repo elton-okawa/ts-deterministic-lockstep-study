@@ -38,7 +38,7 @@ export class PhysicsWorld {
     this.static.push(ground);
 
     // Create a dynamic rigid-body.
-    const rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(0.0, 1.0);
+    const rigidBodyDesc = RAPIER.RigidBodyDesc.newDynamic().setTranslation(0.0, 2.0);
     const rigidBody = this.world.createRigidBody(rigidBodyDesc);
 
     // Create a cuboid collider attached to the dynamic rigidBody.

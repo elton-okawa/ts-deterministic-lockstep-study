@@ -35,7 +35,7 @@ export class InputFrameManager {
     const targetFrame = inputFrame + this._startFrame;
     if (this._lastPlayerFrame[id] < targetFrame) {
       this._lastPlayerFrame[id] = targetFrame;
-      this.tryToConfirmFrame(targetFrame);
+      this.tryToConfirmFrame();
     } else {
       console.error(`Cannot confirm same or older input (current: ${this._lastPlayerFrame[id]}, received: ${targetFrame})`);
     }
@@ -62,13 +62,10 @@ export class InputFrameManager {
     return forced;
   }
 
-  private tryToConfirmFrame(inputFrame: number) {
-    const shouldConfirm = Object.values(this._lastPlayerFrame)
-      .map((frame) => frame > this._lastConfirmedFrame)
-      .reduce((prev, curr) => prev && curr, true);
+  private tryToConfirmFrame() {
+    const minConfirmedFrame = Object.values(this._lastPlayerFrame)
+      .reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
 
-    if (shouldConfirm) {
-      this._lastConfirmedFrame = inputFrame;
-    }
+    this._lastConfirmedFrame = Math.max(this._lastConfirmedFrame, minConfirmedFrame);
   }
 }

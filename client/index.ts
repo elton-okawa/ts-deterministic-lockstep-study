@@ -1,8 +1,9 @@
 import { GameRoomState } from "./generated/GameRoomState";
 import { Application } from './scripts/Application';
 import { PhysicsWorld } from "./scripts/PhysicsWorld";
-import { InputBuffer, RawInput } from "./scripts/InputBuffer";
 import { Ping } from "./scripts/Ping";
+import { InputManager } from "./scripts/InputManager";
+import { Input } from "./scripts/Input";
 
 const client = new Colyseus.Client('ws://localhost:2567');
 const localClientId = Date.now();
@@ -12,17 +13,20 @@ let room: Colyseus.Room;
 const FIXED_DELTA = 33.33;
 const FRAME_FREQUENCY = 1 / FIXED_DELTA;
 const FPS = 60;
+const ROLLBACK_WINDOW = 20;
+const MAX_DELTA_SHIFT = FIXED_DELTA / 3;
 
 let currentState: GameRoomState;
 let app: Application;
 let world: PhysicsWorld;
 let timeSinceLastUpdate = 0;
 let lastUpdate: number;
-let currentInput: RawInput;
+let currentInput: Input;
 let ownId: string;
-let ownInputs: InputBuffer;
-let frame: number;
-let framesAhead: number;
+let inputManager: InputManager;
+
+let currentFrame: number;
+let estimatedServerFrame: number;
 
 let updateTimer: NodeJS.Timer;
 let isOwner = false;
@@ -42,6 +46,7 @@ function connect() {
   client.joinOrCreate<GameRoomState>('game_room', { localClientId }).then(gameRoom => {
     console.log(gameRoom.sessionId, 'joined', gameRoom.name);
     room = gameRoom;
+    currentState = room.state;
 
     gameRoom.onMessage('checkOwnership', (message: CheckOwnershipMessage) => {
       isOwner = message.isOwner;
@@ -67,7 +72,8 @@ function connect() {
       // console.log(`Inputs: ${state.players.get(ownId).inputBuffer.inputs.map((input) => input.frame)}`)
       currentState = state;
       const halfRTT = ping.ping / 2;
-      framesAhead = frame - (state.frame + halfRTT * FRAME_FREQUENCY);
+      estimatedServerFrame = state.frame + halfRTT * FRAME_FREQUENCY
+      app.frameDiff = currentFrame - estimatedServerFrame;
       // console.log(`frame: ${frame}, stateFrame: ${state.frame}, framesAhead: ${framesAhead}`);
     });
 
@@ -92,8 +98,8 @@ function setup(id: string) {
   app = new Application(640, 360);
 
   ownId = id;
-  frame = 1;
-  ownInputs = new InputBuffer(); 
+  console.log(`OwnId: ${ownId}`);
+  currentFrame = 1;
 
   ping = new Ping(() => {
     room.send('ping');
@@ -111,13 +117,27 @@ function start(playerInfos: PlayerInfo[]) {
   app.tryRemoveStartButton();
   app.tryRemoveWaitingForHost();
 
-  world = new PhysicsWorld();
+  world = new PhysicsWorld(ROLLBACK_WINDOW);
+  inputManager = new InputManager(ownId);
 
-  playerInfos.forEach(player => world.addPlayer(player.id, player.position));
+  playerInfos.forEach(player => {
+    world.addPlayer(player.id, player.position);
+    inputManager.addPlayer(player.id);
+  });
+
+  currentState.players.forEach(player => {
+    player.inputBuffer.inputs.forEach(inputSchema => {
+      inputSchema.onChange = (changes: any[]) => { 
+        // console.log(`${player.id}: ${JSON.stringify(changes)}`);
+        inputManager.confirmInput(inputSchema.frame, player.id, inputSchema);
+      }
+    });
+  });
 
   lastUpdate = Date.now();
   updateTimer = setInterval(update, 1000 / FPS);
   currentInput = {
+    frame: currentFrame,
     up: false,
     down: false,
     left: false,
@@ -151,37 +171,74 @@ function handleKey(key: string, pressed: boolean) {
   }
 }
 
-let inputWarningCount = 21;
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(value, min));
+}
+
+let debug_countRollback = 0;
 
 function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
-  while (timeSinceLastUpdate >= FIXED_DELTA && frame < currentState.frame) {
-    timeSinceLastUpdate -= FIXED_DELTA;
-    app.frame = frame;
 
-    ownInputs.setInput(frame, currentInput);
-    room.send('input', { frame, ...currentInput });
+  const timeDiff = (currentFrame - estimatedServerFrame) * FIXED_DELTA;
+  const delta = FIXED_DELTA + clamp(timeDiff, -MAX_DELTA_SHIFT, MAX_DELTA_SHIFT);
+  // while (timeSinceLastUpdate >= delta && currentFrame < currentState.frame) {
+  while (timeSinceLastUpdate >= delta) {
+    timeSinceLastUpdate -= delta;
 
-    // TODO verify if own input has been rejected
-    currentState.players.forEach(player => {
-      const input = player.inputBuffer.inputs[frame % InputBuffer.SIZE];
-      // if (input.frame !== frame && inputWarningCount > 20) {
-      if (input.frame !== frame) {
-        console.log(`Input has different frame (own: ${player.id === ownId}, frame: ${frame}, input: ${input.frame})`);
-        inputWarningCount = 0;
-      }
-      world.applyInput(player.id, input);
-    });
-    inputWarningCount += 1;
-    world.update();
+    simulateGameplayFrame(currentFrame);
 
-    frame += 1;
+    currentFrame += 1;
   }
 
   app.gameObjects = [...world.staticInfo, ...world.bodyInfo];
   app.render();
   lastUpdate = now;
+}
+
+// [startFrame, endFrame[
+function rollback(startFrame: number, endFrame: number) {
+  console.log(`Rollback from '${startFrame}' to '${endFrame}'`)
+  
+  world.restore(startFrame);
+
+  for (let frame = startFrame; frame < endFrame; frame++) {
+    simulatePhysicsFrame(frame);
+  }
+}
+
+function simulateGameplayFrame(frame: number) {
+  app.frame = frame;
+
+  if (inputManager.shouldRollback) {
+    rollback(inputManager.rollbackFromFrame, frame);
+    inputManager.rollbackPerformed();
+  }
+
+  // if (frame > 20 && debug_countRollback > 10) {
+  //   rollback(frame - 10, frame);
+  //   inputManager.rollbackPerformed();
+  //   debug_countRollback = 0; 
+  // }
+  // debug_countRollback += 1;
+
+  // TODO Static delay is not applied by input buffer on client
+  currentInput.frame = frame + 3;
+  inputManager.setOwnInput(currentInput.frame, currentInput);
+  currentInput.frame = frame;
+  room.send('input', currentInput);
+
+  simulatePhysicsFrame(frame);
+}
+
+function simulatePhysicsFrame(frame: number) {
+  currentState.players.forEach(player => {
+    const input = inputManager.getInput(frame, player.id);
+    world.applyInput(player.id, input);
+  });
+
+  world.update(frame);
 }
 
 connect();

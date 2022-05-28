@@ -3,6 +3,7 @@ import { GameObject } from "./GameObject";
 const WAITING_TEXT_KEY = 'waiting-text';
 const START_BUTTON_KEY = 'start-button';
 const FRAME_KEY = 'frame';
+const FRAME_DIFF_KEY = 'frame-diff';
 const PING_KEY = 'ping';
 
 export class Application {
@@ -34,6 +35,7 @@ export class Application {
     app.loader.onError.add((error) => console.log(error));
     app.loader.add('kenney', './static/fonts/Kenney-Future.xml').load(() => {
       this.addFrame();
+      this.addFrameDiff();
       this.addPing();
       this._loaded = true;
     });
@@ -47,6 +49,11 @@ export class Application {
   set frame(arg: number) {
     if (!this._loaded) return;
     this._texts[FRAME_KEY].text = `Frame: ${arg}`;
+  }
+
+  set frameDiff(arg: number) {
+    if (!this._loaded) return;
+    this._texts[FRAME_DIFF_KEY].text = `FDiff: ${arg > 0 ? '   ' + arg.toFixed(2) : arg.toFixed(2)}`;
   }
 
   set ping(arg: number) {
@@ -83,11 +90,21 @@ export class Application {
     this._texts[FRAME_KEY] = text;
   }
 
+  private addFrameDiff() {
+    const text = new PIXI.BitmapText('FDiff: 0', { fontName: 'Kenney-Future', fontSize: 30, align: 'left' });
+
+    text.x = this._app.screen.width - 250;
+    text.y = 30;
+
+    this._overlay.addChild(text);
+    this._texts[FRAME_DIFF_KEY] = text;
+  }
+
   private addPing() {
     const text = new PIXI.BitmapText('Ping: 0 ms', { fontName: 'Kenney-Future', fontSize: 30, align: 'left' });
 
     text.x = this._app.screen.width - 250;
-    text.y = 30;
+    text.y = 60;
 
     this._overlay.addChild(text);
     this._texts[PING_KEY] = text;

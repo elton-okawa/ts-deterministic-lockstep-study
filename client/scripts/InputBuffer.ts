@@ -3,32 +3,30 @@ import { Input } from "./Input";
 const STATIC_DELAY = 3;
 const ROLLBACK_FRAMES = 17;
 
-export interface RawInput {
-  up: boolean;
-  down: boolean;
-  left: boolean;
-  right: boolean;
-  jump: boolean;
-}
-
 export class InputBuffer {
   static SIZE = STATIC_DELAY + ROLLBACK_FRAMES;
 
   inputs: Input[];
 
   constructor() {
-    this.inputs = Array.from({ length: STATIC_DELAY + ROLLBACK_FRAMES }, () => new Input());
+    this.inputs = Array.from({ length: STATIC_DELAY + ROLLBACK_FRAMES }, () => ({
+      frame: 0,
+      up: false,
+      down: false,
+      left: false,
+      right: false,
+      jump: false,
+    }));
   }
 
-  setInput(frame: number, rawInput: RawInput) {
-    const targetFrame = frame + STATIC_DELAY;
-    const input = this.getInput(targetFrame);
-    input.frame = targetFrame;
-    input.up = rawInput.up;
-    input.down = rawInput.down;
-    input.left = rawInput.left;
-    input.right = rawInput.right;
-    input.jump = rawInput.jump;
+  setInput(frame: number, other: Input) {
+    const input = this.getInput(frame);
+    input.frame = frame;
+    input.up = other.up;
+    input.down = other.down;
+    input.left = other.left;
+    input.right = other.right;
+    input.jump = other.jump;
   }
 
   getInput(frame: number): Input {

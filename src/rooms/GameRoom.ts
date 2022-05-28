@@ -75,8 +75,10 @@ export class GameRoom extends Room<GameRoomState> {
     // wait first input confirmation to start simulating -> think about
     // because if someone crashes, it'll be stuck forever
     if (this.started && this.inputFrameManager.confirmedFrame > STATIC_DELAY) {
+    // if (this.started) {
       while (this.timeSinceLastUpdate >= TICK) {
-        const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame);
+        // FIX now we force confirmation in the rollback limit, +10 to be in the middle
+        const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame + 10);
         if (forcedList) {
           console.log(`Forcing input confirmation, estimatedFrame ${this.estimatedClientsFrame}:\n${forcedList.map((forced) => `  id: ${forced.id}, lastConfirmedFrame: ${forced.lastConfirmedFrame}`).join('\n')}`);
           forcedList.map(forced => this.state.players.get(forced.id).copyInputFromTo(forced.lastConfirmedFrame, forced.lastConfirmedFrame + 1 - STATIC_DELAY));
@@ -87,6 +89,7 @@ export class GameRoom extends Room<GameRoomState> {
           // TODO simulate server side and confirm state hash
           // this.world.update();
           this.state.frame += 1;
+          // console.log(`Server: ${this.state.frame}, clientEstimated: ${this.estimatedClientsFrame}`);
         }
 
         this.estimatedClientsFrame += 1;
