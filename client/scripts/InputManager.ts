@@ -107,6 +107,9 @@ export class InputManager {
     this.tryToSetLastCompleteFrame();
 
     if (this._predicted[playerId].lastUsed < frame) {
+      // FIX think if we need to also set input and confirm it
+      this._predicted[playerId].buffer.setInput(frame, input);
+      this._predicted[playerId].confirmed = frame;
       return;
     }
 
@@ -151,6 +154,7 @@ export class InputManager {
       this._needRollback = true;
       // FIX I think that we can rollback from min + 1, but we'll leave as it is for now
       this._rollbackFromFrame = minConfirmed;
+      // console.log(JSON.stringify({ auth: this._authoritative, predicted: this._predicted }));
     }
   }
 }
