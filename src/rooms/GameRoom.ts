@@ -74,8 +74,8 @@ export class GameRoom extends Room<GameRoomState> {
   update(delta: number) {
     // wait first input confirmation to start simulating -> think about
     // because if someone crashes, it'll be stuck forever
-    // if (this.started && this.inputFrameManager.confirmedFrame > STATIC_DELAY) {
-    if (this.started) {
+    if (this.started && this.inputFrameManager.confirmedFrame > STATIC_DELAY) {
+    // if (this.started) {
       while (this.timeSinceLastUpdate >= TICK) {
         // FIX now we force confirmation in the rollback limit, +10 to be in the middle
         const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame + 10);

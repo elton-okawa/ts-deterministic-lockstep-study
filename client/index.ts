@@ -14,6 +14,7 @@ const FIXED_DELTA = 33.33;
 const FRAME_FREQUENCY = 1 / FIXED_DELTA;
 const FPS = 60;
 const ROLLBACK_WINDOW = 20;
+const MAX_DELTA_SHIFT = FIXED_DELTA / 3;
 
 let currentState: GameRoomState;
 let app: Application;
@@ -25,6 +26,7 @@ let ownId: string;
 let inputManager: InputManager;
 
 let currentFrame: number;
+let estimatedServerFrame: number;
 
 let updateTimer: NodeJS.Timer;
 let isOwner = false;
@@ -70,7 +72,8 @@ function connect() {
       // console.log(`Inputs: ${state.players.get(ownId).inputBuffer.inputs.map((input) => input.frame)}`)
       currentState = state;
       const halfRTT = ping.ping / 2;
-      app.frameDiff = currentFrame - (state.frame + halfRTT * FRAME_FREQUENCY);
+      estimatedServerFrame = state.frame + halfRTT * FRAME_FREQUENCY
+      app.frameDiff = currentFrame - estimatedServerFrame;
       // console.log(`frame: ${frame}, stateFrame: ${state.frame}, framesAhead: ${framesAhead}`);
     });
 
@@ -168,36 +171,23 @@ function handleKey(key: string, pressed: boolean) {
   }
 }
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(value, min));
+}
+
 let debug_countRollback = 0;
 
 function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
-  // while (timeSinceLastUpdate >= FIXED_DELTA && currentFrame < currentState.frame) {
 
-  while (timeSinceLastUpdate >= FIXED_DELTA) {
-    timeSinceLastUpdate -= FIXED_DELTA;
-    app.frame = currentFrame;
+  const timeDiff = (currentFrame - estimatedServerFrame) * FIXED_DELTA;
+  const delta = FIXED_DELTA + clamp(timeDiff, -MAX_DELTA_SHIFT, MAX_DELTA_SHIFT);
+  // while (timeSinceLastUpdate >= delta && currentFrame < currentState.frame) {
+  while (timeSinceLastUpdate >= delta) {
+    timeSinceLastUpdate -= delta;
 
-    if (inputManager.shouldRollback) {
-      rollback(inputManager.rollbackFromFrame, currentFrame);
-      inputManager.rollbackPerformed();
-    }
-
-    // if (currentFrame > 20 && debug_countRollback > 10) {
-    //   rollback(currentFrame - 10, currentFrame);
-    //   inputManager.rollbackPerformed();
-    //   debug_countRollback = 0; 
-    // }
-    // debug_countRollback += 1;
-
-    // TODO Static delay is not applied by input buffer on client
-    currentInput.frame = currentFrame + 3;
-    inputManager.setOwnInput(currentInput.frame, currentInput);
-    currentInput.frame = currentFrame;
-    room.send('input', currentInput);
-
-    simulateFrame(currentFrame);
+    simulateGameplayFrame(currentFrame);
 
     currentFrame += 1;
   }
@@ -214,11 +204,35 @@ function rollback(startFrame: number, endFrame: number) {
   world.restore(startFrame);
 
   for (let frame = startFrame; frame < endFrame; frame++) {
-    simulateFrame(frame);
+    simulatePhysicsFrame(frame);
   }
 }
 
-function simulateFrame(frame: number) {
+function simulateGameplayFrame(frame: number) {
+  app.frame = frame;
+
+  if (inputManager.shouldRollback) {
+    rollback(inputManager.rollbackFromFrame, frame);
+    inputManager.rollbackPerformed();
+  }
+
+  // if (frame > 20 && debug_countRollback > 10) {
+  //   rollback(frame - 10, frame);
+  //   inputManager.rollbackPerformed();
+  //   debug_countRollback = 0; 
+  // }
+  // debug_countRollback += 1;
+
+  // TODO Static delay is not applied by input buffer on client
+  currentInput.frame = frame + 3;
+  inputManager.setOwnInput(currentInput.frame, currentInput);
+  currentInput.frame = frame;
+  room.send('input', currentInput);
+
+  simulatePhysicsFrame(frame);
+}
+
+function simulatePhysicsFrame(frame: number) {
   currentState.players.forEach(player => {
     const input = inputManager.getInput(frame, player.id);
     world.applyInput(player.id, input);
