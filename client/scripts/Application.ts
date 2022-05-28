@@ -53,7 +53,7 @@ export class Application {
 
   set frameDiff(arg: number) {
     if (!this._loaded) return;
-    this._texts[FRAME_DIFF_KEY].text = `FDiff: ${arg.toFixed(2)}`;
+    this._texts[FRAME_DIFF_KEY].text = `FDiff: ${arg > 0 ? '   ' + arg.toFixed(2) : arg.toFixed(2)}`;
   }
 
   set ping(arg: number) {
