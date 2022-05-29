@@ -101,8 +101,8 @@ export class InputManager {
       return ownPredicted;
     } else {
       const lastAuth = auth.buffer.getInput(auth.last);
-      this._debugEventManager.input(playerId, InputOrigin.PREDICTED, lastAuth);
-      this._predicted[playerId].buffer.setInput(frame, lastAuth);
+      const resInput = this._predicted[playerId].buffer.setInput(frame, lastAuth);
+      this._debugEventManager.input(playerId, InputOrigin.PREDICTED, resInput);
       return lastAuth;
     }
   }
@@ -110,8 +110,8 @@ export class InputManager {
   confirmInput(frame: number, playerId: string, input: Input) {
     // console.log(`[${playerId}] confirmInput: ${frame}`);
     this._authoritative[playerId].last = frame;
-    this._authoritative[playerId].buffer.setInput(frame, input);
-    this._debugEventManager.confirmInput(playerId, this._authoritative[playerId].buffer.getInput(frame));
+    const resInput = this._authoritative[playerId].buffer.setInput(frame, input);
+    this._debugEventManager.confirmInput(playerId, resInput);
     this.tryToSetLastCompleteFrame();
 
     if (this._predicted[playerId].lastUsed < frame) {
