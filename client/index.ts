@@ -4,6 +4,7 @@ import { PhysicsWorld } from "./scripts/PhysicsWorld";
 import { Ping } from "./scripts/Ping";
 import { InputManager } from "./scripts/InputManager";
 import { Input } from "./scripts/Input";
+import { DebugEventManager } from "./scripts/DebugEventManager";
 
 const client = new Colyseus.Client('ws://localhost:2567');
 const localClientId = Date.now();
@@ -24,6 +25,7 @@ let lastUpdate: number;
 let currentInput: Input;
 let ownId: string;
 let inputManager: InputManager;
+let debugEventManager: DebugEventManager;
 
 let currentFrame: number;
 let estimatedServerFrame: number;
@@ -42,9 +44,12 @@ interface PlayerInfo {
   position: { x: number, y: number };
 }
 
-function handleDownloadClick(filename, text) {
+function handleDownloadClick(filename: string, lines: string[]) {
+  const file = new File(lines, filename, { type: 'text/plain' });
+  const url = URL.createObjectURL(file);
+
   const element = document.createElement('a');
-  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('href', url);
   element.setAttribute('download', filename);
 
   element.style.display = 'none';
@@ -52,12 +57,17 @@ function handleDownloadClick(filename, text) {
 
   element.click();
 
+  URL.revokeObjectURL(url);
   document.body.removeChild(element);
 }
 
 function setupHtml() {
   const downloadButton = document.getElementById('debug_download_button');
-  downloadButton.addEventListener('click', () => handleDownloadClick('test', 'content'));
+  downloadButton.addEventListener('click', () => {
+    const { filename, lines } = debugEventManager.text;
+    console.log(`Exporting: ${lines.length} lines`);
+    handleDownloadClick(filename, lines);
+  });
 }
 
 function connect() {
@@ -118,6 +128,7 @@ function setup(id: string) {
   ownId = id;
   console.log(`OwnId: ${ownId}`);
   currentFrame = 1;
+  debugEventManager = new DebugEventManager(id);
 
   ping = new Ping(() => {
     room.send('ping');
@@ -136,7 +147,7 @@ function start(playerInfos: PlayerInfo[]) {
   app.tryRemoveWaitingForHost();
 
   world = new PhysicsWorld(ROLLBACK_WINDOW);
-  inputManager = new InputManager(ownId);
+  inputManager = new InputManager(ownId, debugEventManager);
 
   playerInfos.forEach(player => {
     world.addPlayer(player.id, player.position);
@@ -218,7 +229,7 @@ function update() {
 // [startFrame, endFrame[
 function rollback(startFrame: number, endFrame: number) {
   console.log(`Rollback from '${startFrame}' to '${endFrame}'`)
-  
+  debugEventManager.rollback(startFrame, endFrame);
   world.restore(startFrame);
 
   for (let frame = startFrame; frame < endFrame; frame++) {

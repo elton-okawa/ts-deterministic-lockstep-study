@@ -19,7 +19,7 @@ export class InputBuffer {
     }));
   }
 
-  setInput(frame: number, other: Input) {
+  setInput(frame: number, other: Input): Input {
     const input = this.getInput(frame);
     input.frame = frame;
     input.up = other.up;
@@ -27,6 +27,8 @@ export class InputBuffer {
     input.left = other.left;
     input.right = other.right;
     input.jump = other.jump;
+
+    return input;
   }
 
   getInput(frame: number): Input {
