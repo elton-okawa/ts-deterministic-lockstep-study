@@ -42,6 +42,24 @@ interface PlayerInfo {
   position: { x: number, y: number };
 }
 
+function handleDownloadClick(filename, text) {
+  const element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
+
+function setupHtml() {
+  const downloadButton = document.getElementById('debug_download_button');
+  downloadButton.addEventListener('click', () => handleDownloadClick('test', 'content'));
+}
+
 function connect() {
   client.joinOrCreate<GameRoomState>('game_room', { localClientId }).then(gameRoom => {
     console.log(gameRoom.sessionId, 'joined', gameRoom.name);
@@ -241,4 +259,5 @@ function simulatePhysicsFrame(frame: number) {
   world.update(frame);
 }
 
+setupHtml();
 connect();
