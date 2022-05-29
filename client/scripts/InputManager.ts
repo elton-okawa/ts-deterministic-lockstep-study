@@ -1,3 +1,4 @@
+import { DebugEventManager, InputOrigin } from "./DebugEventManager";
 import { inputEquals, Input } from "./Input";
 import { InputBuffer } from "./InputBuffer";
 
@@ -38,9 +39,11 @@ export class InputManager {
   private _needRollback: boolean = false;
   private _rollbackFromFrame = 0;
   private _lastCompleteFrame = -1;
+  private _debugEventManager: DebugEventManager;
 
-  constructor(ownId: string) {
+  constructor(ownId: string, debugEventManager: DebugEventManager) {
     this._ownId = ownId;
+    this._debugEventManager = debugEventManager;
   }
 
   // only rollback after we have all authoritative inputs from that frame
@@ -90,11 +93,15 @@ export class InputManager {
       // }
       // this._predicted[playerId].confirmed = frame;
       // this._predicted[playerId].buffer.setInput(frame, authInput);
+      this._debugEventManager.input(playerId, InputOrigin.AUTHORITATIVE, authInput);
       return authInput;
     } else if (playerId === this._ownId) {
-      return this._predicted[playerId].buffer.getInput(frame);
+      const ownPredicted = this._predicted[playerId].buffer.getInput(frame)
+      this._debugEventManager.input(playerId, InputOrigin.PREDICTED, ownPredicted);
+      return ownPredicted;
     } else {
       const lastAuth = auth.buffer.getInput(auth.last);
+      this._debugEventManager.input(playerId, InputOrigin.PREDICTED, lastAuth);
       this._predicted[playerId].buffer.setInput(frame, lastAuth);
       return lastAuth;
     }
@@ -104,6 +111,7 @@ export class InputManager {
     // console.log(`[${playerId}] confirmInput: ${frame}`);
     this._authoritative[playerId].last = frame;
     this._authoritative[playerId].buffer.setInput(frame, input);
+    this._debugEventManager.confirmInput(playerId, this._authoritative[playerId].buffer.getInput(frame));
     this.tryToSetLastCompleteFrame();
 
     if (this._predicted[playerId].lastUsed < frame) {
@@ -134,6 +142,7 @@ export class InputManager {
 
     if (minAuth > this._lastCompleteFrame) {
       this._lastCompleteFrame = minAuth;
+      this._debugEventManager.authFrameConfirmed(minAuth);
     }
   }
 
@@ -155,6 +164,7 @@ export class InputManager {
       // FIX I think that we can rollback from min + 1, but we'll leave as it is for now
       this._rollbackFromFrame = minConfirmed;
       // console.log(JSON.stringify({ auth: this._authoritative, predicted: this._predicted }));
+      this._debugEventManager.rollbackNeeded(minConfirmed);
     }
   }
 }
