@@ -267,7 +267,8 @@ function simulatePhysicsFrame(frame: number) {
     world.applyInput(player.id, input);
   });
 
-  world.update(frame);
+  // state(t+1) = state(t) + input(t)
+  world.update(frame + 1);
 }
 
 setupHtml();
