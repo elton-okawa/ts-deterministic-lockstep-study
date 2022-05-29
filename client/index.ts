@@ -146,7 +146,7 @@ function start(playerInfos: PlayerInfo[]) {
   app.tryRemoveStartButton();
   app.tryRemoveWaitingForHost();
 
-  world = new PhysicsWorld(ROLLBACK_WINDOW);
+  world = new PhysicsWorld(ROLLBACK_WINDOW, debugEventManager);
   inputManager = new InputManager(ownId, debugEventManager);
 
   playerInfos.forEach(player => {

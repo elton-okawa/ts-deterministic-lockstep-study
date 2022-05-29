@@ -1,5 +1,6 @@
 //@ts-ignore
 import rapier from 'https://cdn.skypack.dev/@dimforge/rapier2d-compat@0.7.6';
+import { DebugEventManager } from './DebugEventManager';
 rapier.init();
 
 const RAPIER = rapier as typeof RapierType;
@@ -26,14 +27,16 @@ export class PhysicsWorld {
   private _bodyObjs: { [key: string]: GameObject } = {};
   private _snapshots: WorldSnapshot[];
   private _rapierSnapshots: any[];
+  private _debugEventManager: DebugEventManager;
 
-  constructor(snapshotSize: number) {
+  constructor(snapshotSize: number, debugEventManager: DebugEventManager) {
     console.log(`Using rapierjs version: ${RAPIER.version()}`);
 
     const gravity = { x: 0.0, y: 20 };
     this._world = new RAPIER.World(gravity);
     this._snapshots = Array.from({ length: snapshotSize }, () => new WorldSnapshot(MAX_BODIES));
     this._rapierSnapshots = Array.from({length: snapshotSize});
+    this._debugEventManager = debugEventManager;
 
     this.init();
   }
@@ -73,12 +76,14 @@ export class PhysicsWorld {
   }
 
   private takeSnapshot(frame: number) {
-    this._snapshots[frame % this._snapshots.length]
+    const bodies = this._snapshots[frame % this._snapshots.length]
       .update(frame, this._bodies.values());
+    this._debugEventManager.snapshotSaved(frame, bodies);
     // this._rapierSnapshots[frame % this._rapierSnapshots.length] = this._world.takeSnapshot();
   }
 
   restore(frame: number) {
+    this._debugEventManager.snapshotRestored(frame);
     // FIX rapier function recreate world, so we lost bodies reference
     // this._world = RAPIER.World.restoreSnapshot(this._rapierSnapshots[frame % this._rapierSnapshots.length]);
     const snapshot = this._snapshots[frame % this._snapshots.length];

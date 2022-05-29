@@ -36,7 +36,7 @@ export class WorldSnapshot {
     return this._bodies;
   }
 
-  update(frame: number, bodies: IterableIterator<RAPIER.RigidBody>) {
+  update(frame: number, bodies: IterableIterator<RAPIER.RigidBody>): BodySnapshot[] {
     this._frame = frame;
     this._bodies.forEach(body => body.valid = false);
 
@@ -58,5 +58,7 @@ export class WorldSnapshot {
 
       index += 1;
     }
+
+    return this._bodies;
   }
 }
