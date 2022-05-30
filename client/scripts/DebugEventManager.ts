@@ -9,6 +9,8 @@ enum DebugEventType {
   AUTH_FRAME_CONFIRMED = 'AUTH_FRAME_CONFIRMED',
   ROLLBACK_NEEDED = 'ROLLBACK_NEEDED',
   ROLLBACK = 'ROLLBACK',
+  SNAPSHOT_SAVED = 'SNAPSHOT_SAVED',
+  SNAPSHOT_RESTORED = 'SNAPSHOT_RESTORED',
 }
 
 interface Event {
@@ -89,6 +91,27 @@ export class DebugEventManager {
         startFrame: startFrame,
         endFrame: endFrame,
       }
+    });
+  }
+
+  snapshotSaved(frame: number, bodies: any) {
+    this.addEvent({
+      type: DebugEventType.SNAPSHOT_SAVED,
+      time: new Date(),
+      data: {
+        frame: frame,
+        bodies: _.cloneDeep(bodies),
+      }
+    });
+  }
+
+  snapshotRestored(frame: number) {
+    this.addEvent({
+      type: DebugEventType.SNAPSHOT_RESTORED,
+      time: new Date(),
+      data: {
+        frame: frame,
+      },
     });
   }
 }
