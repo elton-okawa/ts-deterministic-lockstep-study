@@ -8,24 +8,21 @@ const RAPIER = rapier as typeof RapierType;
 import { GameObject } from './GameObject';
 import { Input } from './Input';
 import { Vector } from './Vector';
-import { WorldSnapshot } from './WorldSnapshot';
 
 const PHYSICS_SCALE = 100;
 const FORCE_MULTIPLIER = 20;
 const MAX_HORIZONTAL_SPEED = 2;
 const PLAYER_SIZE = { x: 50, y: 50 };
-const MAX_BODIES = 10;
 
 export class PhysicsWorld {
 
   private _world: RAPIER.World;
   private _static: RAPIER.Collider[] = [];
   private _bodies = new Map<number, RAPIER.RigidBody>();
-  private _players: { [key: string]: RAPIER.RigidBody } = {};
+  private _players = new Map<string, RAPIER.RigidBody>();
 
   private _staticObjs: { [key: string]: GameObject } = {};
   private _bodyObjs: { [key: string]: GameObject } = {};
-  private _snapshots: WorldSnapshot[];
   private _rapierSnapshots: any[];
   private _debugEventManager: DebugEventManager;
 
@@ -34,7 +31,6 @@ export class PhysicsWorld {
 
     const gravity = { x: 0.0, y: 20 };
     this._world = new RAPIER.World(gravity);
-    this._snapshots = Array.from({ length: snapshotSize }, () => new WorldSnapshot(MAX_BODIES));
     this._rapierSnapshots = Array.from({length: snapshotSize});
     this._debugEventManager = debugEventManager;
 
@@ -75,32 +71,18 @@ export class PhysicsWorld {
     this.takeSnapshot(frame);
   }
 
-  private takeSnapshot(frame: number) {
-    const bodies = this._snapshots[frame % this._snapshots.length]
-      .update(frame, this._bodies.values());
-    this._debugEventManager.snapshotSaved(frame, bodies);
-    // this._rapierSnapshots[frame % this._rapierSnapshots.length] = this._world.takeSnapshot();
-  }
-
   restore(frame: number) {
     this._debugEventManager.snapshotRestored(frame);
-    // FIX rapier function recreate world, so we lost bodies reference
-    // this._world = RAPIER.World.restoreSnapshot(this._rapierSnapshots[frame % this._rapierSnapshots.length]);
-    const snapshot = this._snapshots[frame % this._snapshots.length];
-    if (snapshot.frame !== frame) {
-      console.warn(`Restoring snapshot with different frame (snapshot: ${snapshot.frame}, frame: ${frame})`);
-    }
+    const oldWorldRef = this._world;
+    this._world = RAPIER.World.restoreSnapshot(this._rapierSnapshots[frame % this._rapierSnapshots.length]);
+    
+    this.restoreRigibodyReferences(this._players);
+    this.restoreRigibodyReferences(this._bodies);
+    this.restoreStaticReferences();
 
-    snapshot.bodies
-      .filter(body => body.valid)
-      .forEach(body => {
-        const physics = this._bodies.get(body.handle);
-        physics.setTranslation(body.position, true);
-        physics.setRotation(body.rotation, true);
-        physics.setLinvel(body.linearVelocity, true);
-        physics.setAngvel(body.angularVelocity, true);
-      }
-    );
+    // Free world at the end to not have the risk of losing current body.id
+    // used to find new object references
+    oldWorldRef.free();
   }
 
   addPlayer(id: string, position: Vector) {
@@ -112,7 +94,7 @@ export class PhysicsWorld {
       .cuboid(PLAYER_SIZE.x / (PHYSICS_SCALE * 2), PLAYER_SIZE.y / (PHYSICS_SCALE * 2));
     const collider = this._world.createCollider(colliderDesc, body.handle);
 
-    this._players[id] = body;
+    this._players.set(id, body);
     this._bodies.set(body.handle, body);
     this._bodyObjs[collider.handle] = new GameObject();
     this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
@@ -124,11 +106,11 @@ export class PhysicsWorld {
   }
 
   hasPlayer(id: string): boolean {
-    return id in this._players;
+    return this._players.has(id);
   }
 
   applyInput(id: string, input: Input) {
-    const player = this._players[id];
+    const player = this._players.get(id);
     // TODO maybe we should use setLinvel directly but adding gravity velocity
     player.setLinvel(this.limitVelocity(player.linvel()), true);
     player.applyForce(this.inputToVector(input), true);
@@ -193,5 +175,23 @@ export class PhysicsWorld {
     target.rotation = collider.rotation();
     target.size.x = halfSize.x * 2 * PHYSICS_SCALE;
     target.size.y = halfSize.y * 2 * PHYSICS_SCALE;
+  }
+
+  private takeSnapshot(frame: number) {
+    this._rapierSnapshots[frame % this._rapierSnapshots.length] = this._world.takeSnapshot();
+  }
+
+  private restoreRigibodyReferences(bodies: Map<string|number, RAPIER.RigidBody>) {
+    for (let key of bodies.keys()) {
+      const newBody = this._world.getRigidBody(bodies.get(key).handle);
+      bodies.set(key, newBody);
+    }
+  }
+
+  private restoreStaticReferences() {
+    for (let i = 0; i < this._static.length; i++) {
+      const oldCollider = this._static[i];
+      this._static[i] = this._world.getCollider(oldCollider.handle);
+    }
   }
 }
