@@ -155,6 +155,9 @@ export class InputManager {
    * - B7 rejected -> rollback must still start at 6
    */
   private tryToSetRollbackFrame() {
+    // FIX we should receive the input frame that caused the rollback because
+    // for now, we only need to rollback from that frame and not from
+    // inputs that we didn't confirm yet
     const minConfirmed = Object.values(this._predicted)
       .map((predicted) => predicted.confirmed)
       .reduce((prev, curr) => Math.min(prev, curr), Number.POSITIVE_INFINITY);
