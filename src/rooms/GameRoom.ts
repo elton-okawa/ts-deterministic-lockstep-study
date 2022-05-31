@@ -2,7 +2,7 @@ import { Room, Client } from "colyseus";
 import { InputFrameManager } from "../helpers/InputFrameManager";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { GameRoomState } from "./schema/GameRoomState";
-import { InputMessage } from "./schema/PlayerSchema";
+import { RawInput } from "./schema/InputBufferSchema";
 
 const TICK = 33.33; // ~30fps physics
 const STATIC_DELAY = 3;
@@ -18,6 +18,10 @@ interface CheckOwnershipMessage {
 
 interface StartGameMessage {
   localClientId: number;
+}
+
+interface InputMessage extends RawInput {
+  frame: number;
 }
 
 interface PlayerInfo {
@@ -51,7 +55,7 @@ export class GameRoom extends Room<GameRoomState> {
 
   onJoin (client: Client, options: ClientOptions) {
     console.log(client.sessionId, "joined!");
-    this.state.addPlayer(client.id, STATIC_DELAY, INPUT_WINDOW);
+    this.state.addPlayer(client.id, INPUT_WINDOW);
     this.inputFrameManager.addPlayer(client.id);
     this.spawnPoints[client.id] = {
       id: client.id,
@@ -81,7 +85,7 @@ export class GameRoom extends Room<GameRoomState> {
         const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame + 10);
         if (forcedList) {
           console.log(`Forcing input confirmation, estimatedFrame ${this.estimatedClientsFrame}:\n${forcedList.map((forced) => `  id: ${forced.id}, lastConfirmedFrame: ${forced.lastConfirmedFrame}`).join('\n')}`);
-          forcedList.map(forced => this.state.players.get(forced.id).copyInputFromTo(forced.lastConfirmedFrame, forced.lastConfirmedFrame + 1 - STATIC_DELAY));
+          forcedList.map(forced => this.state.players.get(forced.id).copyInputFromTo(forced.lastConfirmedFrame, forced.lastConfirmedFrame + 1));
         }
 
         // if we confirm inputs from frame X, we can have state X+1
@@ -113,8 +117,9 @@ export class GameRoom extends Room<GameRoomState> {
       if (this.state.frame >= input.frame + INPUT_WINDOW) {
         console.log(`It should reject input from ${client.id}`);
       }
-      this.state.players.get(client.id).setInput(input);
-      this.inputFrameManager.confirmInput(client.id, input.frame);
+      const targetFrame = input.frame + STATIC_DELAY;
+      this.state.players.get(client.id).setInput(targetFrame, input);
+      this.inputFrameManager.confirmInput(client.id, targetFrame);
     });
 
     this.onMessage('checkOwnership', (client: Client, input: CheckOwnershipMessage) => {

@@ -10,8 +10,8 @@ export class GameRoomState extends Schema {
     this.frame = frame;
   }
 
-  addPlayer(id: string, staticDelay: number, window: number) {
-    this.players.set(id, new PlayerSchema(id, staticDelay, window));
+  addPlayer(id: string, window: number) {
+    this.players.set(id, new PlayerSchema(id, window));
   }
 
   removePlayer(id: string) {
