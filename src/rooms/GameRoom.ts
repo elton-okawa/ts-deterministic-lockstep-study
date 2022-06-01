@@ -118,8 +118,9 @@ export class GameRoom extends Room<GameRoomState> {
         console.log(`It should reject input from ${client.id}`);
       }
       const targetFrame = input.frame + STATIC_DELAY;
-      this.state.players.get(client.id).setInput(targetFrame, input);
-      this.inputFrameManager.confirmInput(client.id, targetFrame);
+      if (this.inputFrameManager.confirmInput(client.id, targetFrame)) {
+        this.state.players.get(client.id).setInput(targetFrame, input);
+      }
     });
 
     this.onMessage('checkOwnership', (client: Client, input: CheckOwnershipMessage) => {
