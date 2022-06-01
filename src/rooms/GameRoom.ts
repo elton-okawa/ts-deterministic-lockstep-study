@@ -6,7 +6,7 @@ import { RawInput } from "./schema/InputBufferSchema";
 
 const TICK = 33.33; // ~30fps physics
 const STATIC_DELAY = 3;
-const INPUT_WINDOW = 20;
+const INPUT_WINDOW = 10;
 
 interface ClientOptions {
   localClientId: number;
@@ -78,11 +78,10 @@ export class GameRoom extends Room<GameRoomState> {
   update(delta: number) {
     // wait first input confirmation to start simulating -> think about
     // because if someone crashes, it'll be stuck forever
-    if (this.started && this.inputFrameManager.confirmedFrame > STATIC_DELAY) {
-    // if (this.started) {
+    // if (this.started && this.inputFrameManager.confirmedFrame > STATIC_DELAY) {
+    if (this.started) {
       while (this.timeSinceLastUpdate >= TICK) {
-        // FIX now we force confirmation in the rollback limit, +10 to be in the middle
-        const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame + 10);
+        const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame);
         if (forcedList) {
           console.log(`Forcing input confirmation, estimatedFrame ${this.estimatedClientsFrame}:\n${forcedList.map((forced) => `  id: ${forced.id}, lastConfirmedFrame: ${forced.lastConfirmedFrame}`).join('\n')}`);
           forcedList.map(forced => this.state.players.get(forced.id).copyInputFromTo(forced.lastConfirmedFrame, forced.lastConfirmedFrame + 1));
