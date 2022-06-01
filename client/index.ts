@@ -210,8 +210,9 @@ function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
 
-  const timeDiff = (currentFrame - estimatedServerFrame) * FIXED_DELTA;
-  const delta = FIXED_DELTA + clamp(timeDiff, -MAX_DELTA_SHIFT, MAX_DELTA_SHIFT);
+  // const timeDiff = (currentFrame - estimatedServerFrame) * FIXED_DELTA;
+  // const delta = FIXED_DELTA + clamp(timeDiff, -MAX_DELTA_SHIFT, MAX_DELTA_SHIFT);
+  const delta = FIXED_DELTA;
   // while (timeSinceLastUpdate >= delta && currentFrame < currentState.frame) {
   while (timeSinceLastUpdate >= delta) {
     timeSinceLastUpdate -= delta;
