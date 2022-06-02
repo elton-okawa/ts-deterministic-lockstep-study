@@ -210,6 +210,10 @@ function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
 
+  // how to first sync client
+  // receive the start in 1 second
+  // start at 1 - average ping 
+
   // const timeDiff = (currentFrame - estimatedServerFrame) * FIXED_DELTA;
   // const delta = FIXED_DELTA + clamp(timeDiff, -MAX_DELTA_SHIFT, MAX_DELTA_SHIFT);
   const delta = FIXED_DELTA;
