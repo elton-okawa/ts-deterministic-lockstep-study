@@ -1,5 +1,5 @@
 const WINDOW_SIZE = 10;
-const PING_INTERVAL_MS = 500;
+const PING_INTERVAL_MS = 200;
 
 export class Ping {
   private window: number[];
