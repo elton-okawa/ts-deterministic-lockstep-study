@@ -12,12 +12,10 @@ export interface RawInput {
 export class InputBufferSchema extends Schema {
   @type([ InputSchema ]) inputs;
 
-  private staticDelay: number;
   private window: number;
 
-  constructor(staticDelay: number, window: number) {
+  constructor(window: number) {
     super();
-    this.staticDelay = staticDelay;
     this.window = window;
     this.inputs = new ArraySchema<InputSchema>(...Array.from(
       { length: this.window },
@@ -26,9 +24,8 @@ export class InputBufferSchema extends Schema {
   }
 
   setInput(frame: number, rawInput: RawInput) {
-    const targetFrame = frame + this.staticDelay;
-    const input = this.getInput(targetFrame);
-    input.frame = targetFrame;
+    const input = this.getInput(frame);
+    input.frame = frame;
     input.up = rawInput.up;
     input.down = rawInput.down;
     input.left = rawInput.left;

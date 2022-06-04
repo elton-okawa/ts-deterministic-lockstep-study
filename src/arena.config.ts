@@ -17,7 +17,7 @@ export default Arena({
         gameServer.define('game_room', GameRoom);
 
         if (process.env.NODE_ENV !== "production") {
-            gameServer.simulateLatency(100);
+            gameServer.simulateLatency(300);
         }
     },
 

@@ -2,11 +2,11 @@ import { Room, Client } from "colyseus";
 import { InputFrameManager } from "../helpers/InputFrameManager";
 import { PhysicsWorld } from "./PhysicsWorld";
 import { GameRoomState } from "./schema/GameRoomState";
-import { InputMessage } from "./schema/PlayerSchema";
+import { RawInput } from "./schema/InputBufferSchema";
 
 const TICK = 33.33; // ~30fps physics
 const STATIC_DELAY = 3;
-const INPUT_WINDOW = 20;
+const INPUT_WINDOW = 10;
 
 interface ClientOptions {
   localClientId: number;
@@ -18,6 +18,10 @@ interface CheckOwnershipMessage {
 
 interface StartGameMessage {
   localClientId: number;
+}
+
+interface InputMessage extends RawInput {
+  frame: number;
 }
 
 interface PlayerInfo {
@@ -51,7 +55,7 @@ export class GameRoom extends Room<GameRoomState> {
 
   onJoin (client: Client, options: ClientOptions) {
     console.log(client.sessionId, "joined!");
-    this.state.addPlayer(client.id, STATIC_DELAY, INPUT_WINDOW);
+    this.state.addPlayer(client.id, INPUT_WINDOW);
     this.inputFrameManager.addPlayer(client.id);
     this.spawnPoints[client.id] = {
       id: client.id,
@@ -74,14 +78,13 @@ export class GameRoom extends Room<GameRoomState> {
   update(delta: number) {
     // wait first input confirmation to start simulating -> think about
     // because if someone crashes, it'll be stuck forever
-    if (this.started && this.inputFrameManager.confirmedFrame > STATIC_DELAY) {
-    // if (this.started) {
+    // if (this.started && this.inputFrameManager.confirmedFrame > STATIC_DELAY) {
+    if (this.started) {
       while (this.timeSinceLastUpdate >= TICK) {
-        // FIX now we force confirmation in the rollback limit, +10 to be in the middle
-        const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame + 10);
+        const forcedList = this.inputFrameManager.tryToForceConfirmation(this.estimatedClientsFrame);
         if (forcedList) {
           console.log(`Forcing input confirmation, estimatedFrame ${this.estimatedClientsFrame}:\n${forcedList.map((forced) => `  id: ${forced.id}, lastConfirmedFrame: ${forced.lastConfirmedFrame}`).join('\n')}`);
-          forcedList.map(forced => this.state.players.get(forced.id).copyInputFromTo(forced.lastConfirmedFrame, forced.lastConfirmedFrame + 1 - STATIC_DELAY));
+          forcedList.map(forced => this.state.players.get(forced.id).copyInputFromTo(forced.lastConfirmedFrame, forced.lastConfirmedFrame + 1));
         }
 
         // if we confirm inputs from frame X, we can have state X+1
@@ -113,8 +116,10 @@ export class GameRoom extends Room<GameRoomState> {
       if (this.state.frame >= input.frame + INPUT_WINDOW) {
         console.log(`It should reject input from ${client.id}`);
       }
-      this.state.players.get(client.id).setInput(input);
-      this.inputFrameManager.confirmInput(client.id, input.frame);
+      const targetFrame = input.frame + STATIC_DELAY;
+      if (this.inputFrameManager.confirmInput(client.id, targetFrame)) {
+        this.state.players.get(client.id).setInput(targetFrame, input);
+      }
     });
 
     this.onMessage('checkOwnership', (client: Client, input: CheckOwnershipMessage) => {
@@ -127,10 +132,11 @@ export class GameRoom extends Room<GameRoomState> {
       if (isOwner) {
         console.log(`Starting game with:`);
         console.log(Object.values(this.spawnPoints));
-        // TODO maybe set a time to start to everyone start at the same time
         await this.lock();
-        this.broadcast('startGame', Object.values(this.spawnPoints));
-        this.started = true;
+
+        const startInMs = 1000;
+        this.broadcast('startGame', { startInMs: startInMs, players: Object.values(this.spawnPoints) });
+        setTimeout(() => this.started = true, startInMs);
       } else {
         console.log('Only owner can start the game');
       }

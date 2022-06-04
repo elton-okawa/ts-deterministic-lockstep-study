@@ -30,13 +30,18 @@ let debugEventManager: DebugEventManager;
 let currentFrame: number;
 let estimatedServerFrame: number;
 
-let updateTimer: NodeJS.Timer;
+let updateTimeout: NodeJS.Timer;
 let isOwner = false;
 let started = false;
 let ping: Ping;
 
 interface CheckOwnershipMessage {
   isOwner: boolean;
+}
+
+interface StartMessage {
+  startInMs: number,
+  players: PlayerInfo[],
 }
 
 interface PlayerInfo {
@@ -89,8 +94,8 @@ function connect() {
       }
     });
 
-    gameRoom.onMessage('startGame', (playerInfos: PlayerInfo[]) => {
-      start(playerInfos);
+    gameRoom.onMessage('startGame', (message: StartMessage) => {
+      start(message.startInMs, message.players);
       started = true;
     });
 
@@ -107,12 +112,12 @@ function connect() {
 
     gameRoom.onError((code: number, message: string) => {
       console.log(`Error code '${code}': '${message}'`);
-      clearInterval(updateTimer);
+      clearInterval(updateTimeout);
     });
 
     gameRoom.onLeave((code: number) => {
       console.log(`Leave code '${code}'`);
-      clearInterval(updateTimer);
+      clearInterval(updateTimeout);
     });
 
     setup(gameRoom.sessionId);
@@ -142,7 +147,7 @@ function setup(id: string) {
   app.addWaitingForHost();
 }
 
-function start(playerInfos: PlayerInfo[]) {
+function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
   app.tryRemoveStartButton();
   app.tryRemoveWaitingForHost();
 
@@ -163,8 +168,10 @@ function start(playerInfos: PlayerInfo[]) {
     });
   });
 
-  lastUpdate = Date.now();
-  updateTimer = setInterval(update, 1000 / FPS);
+  // remove estimated time to arrive the start message
+  const startInMs = shouldStartInMs - ping.ping / 2;
+  lastUpdate = Date.now() + startInMs;
+  updateTimeout = setTimeout(update, startInMs);
   currentInput = {
     frame: currentFrame,
     up: false,
@@ -210,8 +217,9 @@ function update() {
   const now = Date.now();
   timeSinceLastUpdate += now - lastUpdate;
 
-  const timeDiff = (currentFrame - estimatedServerFrame) * FIXED_DELTA;
-  const delta = FIXED_DELTA + clamp(timeDiff, -MAX_DELTA_SHIFT, MAX_DELTA_SHIFT);
+  // const timeDiff = (currentFrame - estimatedServerFrame) * FIXED_DELTA;
+  // const delta = FIXED_DELTA + clamp(timeDiff, -MAX_DELTA_SHIFT, MAX_DELTA_SHIFT);
+  const delta = FIXED_DELTA;
   // while (timeSinceLastUpdate >= delta && currentFrame < currentState.frame) {
   while (timeSinceLastUpdate >= delta) {
     timeSinceLastUpdate -= delta;
@@ -224,6 +232,8 @@ function update() {
   app.gameObjects = [...world.staticInfo, ...world.bodyInfo];
   app.render();
   lastUpdate = now;
+
+  updateTimeout = setTimeout(update, 1000 / FPS);
 }
 
 // [startFrame, endFrame[

@@ -23,7 +23,6 @@ export class InputFrameManager {
   }
 
   addPlayer(id: string) {
-    // first client input will be raw frame 1 resulting in 1 + STATIC_DELAY
     this._lastPlayerFrame[id] = this._startFrame;
   }
 
@@ -31,13 +30,14 @@ export class InputFrameManager {
     delete this._lastPlayerFrame[id];
   }
 
-  confirmInput(id: string, inputFrame: number) {
-    const targetFrame = inputFrame + this._startFrame;
-    if (this._lastPlayerFrame[id] < targetFrame) {
-      this._lastPlayerFrame[id] = targetFrame;
+  confirmInput(id: string, frame: number): boolean {
+    if (this._lastPlayerFrame[id] < frame) {
+      this._lastPlayerFrame[id] = frame;
       this.tryToConfirmFrame();
+      return true;
     } else {
-      console.error(`Cannot confirm same or older input (current: ${this._lastPlayerFrame[id]}, received: ${targetFrame})`);
+      console.error(`Cannot confirm same or older input (current: ${this._lastPlayerFrame[id]}, received: ${frame})`);
+      return false;
     }
   }
 

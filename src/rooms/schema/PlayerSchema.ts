@@ -2,22 +2,18 @@ import { Schema, type } from "@colyseus/schema";
 import { InputBufferSchema, RawInput } from "./InputBufferSchema";
 import { InputSchema } from "./InputSchema";
 
-export interface InputMessage extends RawInput {
-  frame: number;
-}
-
 export class PlayerSchema extends Schema {
   @type('string') id;
   @type(InputBufferSchema) inputBuffer;
 
-  constructor(id: string, staticDelay: number, window: number) {
+  constructor(id: string, window: number) {
     super();
     this.id = id;
-    this.inputBuffer = new InputBufferSchema(staticDelay, window);
+    this.inputBuffer = new InputBufferSchema(window);
   }
 
-  setInput(inputMessage: InputMessage) {
-    this.inputBuffer.setInput(inputMessage.frame, inputMessage);
+  setInput(frame: number, input: RawInput) {
+    this.inputBuffer.setInput(frame, input);
   }
 
   getInput(frame: number): InputSchema {
