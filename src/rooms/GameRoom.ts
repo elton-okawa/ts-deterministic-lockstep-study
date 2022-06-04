@@ -44,12 +44,12 @@ export class GameRoom extends Room<GameRoomState> {
 
   onCreate (options: ClientOptions) {
     this.world = new PhysicsWorld();
-    this.setState(new GameRoomState(STATIC_DELAY));
+    this.setState(new GameRoomState(0));
     this.setSimulationInterval((delta) => this.update(delta), TICK);
     this.setPatchRate(TICK);
     this.setupMessageHandlers();
     this.ownerId = options.localClientId;
-    this.inputFrameManager = new InputFrameManager(STATIC_DELAY, INPUT_WINDOW);
+    this.inputFrameManager = new InputFrameManager(STATIC_DELAY - 1, INPUT_WINDOW);
     console.log(`Room '${this.roomId}' created with owner '${this.ownerId}'`);
   }
 

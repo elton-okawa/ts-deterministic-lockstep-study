@@ -132,7 +132,7 @@ function setup(id: string) {
 
   ownId = id;
   console.log(`OwnId: ${ownId}`);
-  currentFrame = 1;
+  currentFrame = 0;
   debugEventManager = new DebugEventManager(id);
 
   ping = new Ping(() => {
