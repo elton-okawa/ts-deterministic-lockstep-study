@@ -5,6 +5,7 @@ import { Ping } from "./scripts/Ping";
 import { InputManager } from "./scripts/InputManager";
 import { Input } from "./scripts/Input";
 import { DebugEventManager } from "./scripts/DebugEventManager";
+import { GameObject } from "./scripts/GameObject";
 
 const client = new Colyseus.Client('ws://localhost:2567');
 const localClientId = Date.now();
@@ -152,6 +153,7 @@ function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
   app.tryRemoveWaitingForHost();
 
   world = new PhysicsWorld(ROLLBACK_WINDOW, debugEventManager);
+  createSceneObjects();
   inputManager = new InputManager(ownId, ROLLBACK_WINDOW, debugEventManager);
 
   playerInfos.forEach(player => {
@@ -185,6 +187,13 @@ function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
     handleKey(event.key, true));
   document.addEventListener('keyup', (event: KeyboardEvent) =>
     handleKey(event.key, false));
+}
+
+function createSceneObjects() {
+  const ground = new GameObject();
+  ground.sprite = './static/gray-block.png';
+
+  world.addSquareCollider(ground, { width: 5, height: 0.6, x: 2.5, y: 3.3});
 }
 
 function handleKey(key: string, pressed: boolean) {

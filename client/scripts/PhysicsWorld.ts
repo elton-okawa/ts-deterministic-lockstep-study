@@ -116,6 +116,15 @@ export class PhysicsWorld {
     player.applyForce(this.inputToVector(input), true);
   }
 
+  addSquareCollider(gameObject: GameObject, { width, height, x, y }: { width: number, height: number, x: number, y: number}) {
+    const collider = this._world.createCollider(
+      new RAPIER.ColliderDesc(new RAPIER.Cuboid(width/2, height/2)).setTranslation(x, y),
+    );
+
+    this._staticObjs[collider.handle] = gameObject;
+    this.mutateColliderToGameObject(collider, this._staticObjs[collider.handle]);
+  }
+
   private limitVelocity(vel: RAPIER.Vector) {
     const signX = vel.x > 0 ? 1 : -1;
     // const signY = vel.y > 0 ? 1 : -1;
@@ -143,9 +152,9 @@ export class PhysicsWorld {
 
   private setupWalls() {
     // Create the ground
-    const ground = this._world.createCollider(
-      new RAPIER.ColliderDesc(new RAPIER.Cuboid(2.5, 0.3)).setTranslation(2.5, 3.3)
-    );
+    // const ground = this._world.createCollider(
+    //   new RAPIER.ColliderDesc(new RAPIER.Cuboid(2.5, 0.3)).setTranslation(2.5, 3.3)
+    // );
     const roof = this._world.createCollider(
       new RAPIER.ColliderDesc(new RAPIER.Cuboid(1, 0.3)).setTranslation(3, 0.3),
     );
@@ -157,7 +166,8 @@ export class PhysicsWorld {
       new RAPIER.ColliderDesc(new RAPIER.Cuboid(0.3, 4)).setTranslation(5.7, 2),
     );
 
-    this._static.push(ground, leftWall, rightWall, roof);
+    // this._static.push(ground, leftWall, rightWall, roof);
+    this._static.push(leftWall, rightWall, roof);
 
     this._static.forEach(st => {
       this._staticObjs[st.handle] = new GameObject();
