@@ -1,16 +1,11 @@
 import { Input } from "./Input";
 
-const STATIC_DELAY = 3;
-const ROLLBACK_FRAMES = 17;
-
 export class InputBuffer {
-  static SIZE = STATIC_DELAY + ROLLBACK_FRAMES;
-
   inputs: Input[];
 
-  constructor() {
-    this.inputs = Array.from({ length: STATIC_DELAY + ROLLBACK_FRAMES }, () => ({
-      frame: 0,
+  constructor(window: number) {
+    this.inputs = Array.from({ length: window }, (_, i) => ({
+      frame: i,
       up: false,
       down: false,
       left: false,

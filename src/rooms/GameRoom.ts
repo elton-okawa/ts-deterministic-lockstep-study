@@ -112,10 +112,6 @@ export class GameRoom extends Room<GameRoomState> {
     });
 
     this.onMessage('input', (client: Client, input: InputMessage) => {
-      // TODO block input with old frame, client send real frame instead of delayed
-      if (this.state.frame >= input.frame + INPUT_WINDOW) {
-        console.log(`It should reject input from ${client.id}`);
-      }
       const targetFrame = input.frame + STATIC_DELAY;
       if (this.inputFrameManager.confirmInput(client.id, targetFrame)) {
         this.state.players.get(client.id).setInput(targetFrame, input);
