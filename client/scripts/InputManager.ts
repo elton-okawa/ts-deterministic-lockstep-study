@@ -40,9 +40,11 @@ export class InputManager {
   private _rollbackFromFrame = 0;
   private _lastCompleteFrame = -1;
   private _debugEventManager: DebugEventManager;
+  private _window: number;
 
-  constructor(ownId: string, debugEventManager: DebugEventManager) {
+  constructor(ownId: string, window: number, debugEventManager: DebugEventManager) {
     this._ownId = ownId;
+    this._window = window;
     this._debugEventManager = debugEventManager;
   }
 
@@ -63,12 +65,12 @@ export class InputManager {
     this._predicted[playerId] = { 
       confirmed: 0,
       lastUsed: 0,
-      buffer: new InputBuffer(),
+      buffer: new InputBuffer(this._window),
     };
 
     this._authoritative[playerId] = {
       last: 0,
-      buffer: new InputBuffer(),
+      buffer: new InputBuffer(this._window),
     };
   }
 

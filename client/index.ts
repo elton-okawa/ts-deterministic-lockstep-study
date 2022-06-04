@@ -132,7 +132,7 @@ function setup(id: string) {
 
   ownId = id;
   console.log(`OwnId: ${ownId}`);
-  currentFrame = 1;
+  currentFrame = 0;
   debugEventManager = new DebugEventManager(id);
 
   ping = new Ping(() => {
@@ -152,7 +152,7 @@ function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
   app.tryRemoveWaitingForHost();
 
   world = new PhysicsWorld(ROLLBACK_WINDOW, debugEventManager);
-  inputManager = new InputManager(ownId, debugEventManager);
+  inputManager = new InputManager(ownId, ROLLBACK_WINDOW, debugEventManager);
 
   playerInfos.forEach(player => {
     world.addPlayer(player.id, player.position);
