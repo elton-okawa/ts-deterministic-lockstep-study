@@ -132,10 +132,11 @@ export class GameRoom extends Room<GameRoomState> {
       if (isOwner) {
         console.log(`Starting game with:`);
         console.log(Object.values(this.spawnPoints));
-        // TODO maybe set a time to start to everyone start at the same time
         await this.lock();
-        this.broadcast('startGame', Object.values(this.spawnPoints));
-        this.started = true;
+
+        const startInMs = 1000;
+        this.broadcast('startGame', { startInMs: startInMs, players: Object.values(this.spawnPoints) });
+        setTimeout(() => this.started = true, startInMs);
       } else {
         console.log('Only owner can start the game');
       }
