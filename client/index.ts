@@ -218,6 +218,14 @@ function createSceneObjects() {
   rightWall.sprite = './static/gray-block.png';
   world.addSquareCollider(rightWall, { width: 0.3, height: 5.8, x: 6.25, y: 3.2});
 
+  const leftJumper = new GameObject();
+  leftJumper.sprite = './static/gray-block.png';
+  world.addJumper(leftJumper, { width: 1, height: 0.1, x: 1, y: 3.25});
+
+  const rightJumper = new GameObject();
+  rightJumper.sprite = './static/gray-block.png';
+  world.addJumper(rightJumper, { width: 1, height: 0.1, x: 5.5, y: 3.25});
+
   const floatingPlatform = new GameObject();
   floatingPlatform.sprite = './static/gray-block.png';
   world.addRotationSquareBody(floatingPlatform, { width: 0.3, height: 2, x: 3.2, y: 1.5 });
@@ -228,9 +236,12 @@ function createSceneObjects() {
 
   const ballTwo = new GameObject();
   ballTwo.sprite = './static/gray-circle.png';
-  world.addRoundBody(ballTwo, { radius: 0.25, x: 4, y: 2 });
+  world.addRoundBody(ballTwo, { radius: 0.25, x: 5, y: 2 });
 
-  gameObjects.push(ground, roof, leftWall, rightWall, floatingPlatform, ballOne, ballTwo);
+  gameObjects.push(
+    ground, roof, leftWall, rightWall, leftJumper, rightJumper,
+    floatingPlatform, ballOne, ballTwo,
+  );
 }
 
 function handleKey(key: string, pressed: boolean) {

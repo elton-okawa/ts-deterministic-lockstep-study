@@ -1,5 +1,6 @@
 //@ts-ignore
 import rapier from 'https://cdn.skypack.dev/@dimforge/rapier2d-compat@0.7.6';
+
 import { DebugEventManager } from './DebugEventManager';
 rapier.init();
 
@@ -33,6 +34,7 @@ interface Id {
 export class PhysicsWorld {
 
   private _world: RAPIER.World;
+  private _collisionEventQueue: RAPIER.EventQueue; 
   private _players = new Map<string, RAPIER.RigidBody>();
   private _movableColliders = new Map<number, RAPIER.Collider>();
 
@@ -46,12 +48,29 @@ export class PhysicsWorld {
 
     const gravity = { x: 0.0, y: 20 };
     this._world = new RAPIER.World(gravity);
+    this._collisionEventQueue = new RAPIER.EventQueue(true);
     this._rapierSnapshots = Array.from({length: snapshotSize});
     this._debugEventManager = debugEventManager;
   }
 
   update(frame: number) {
-    this._world.step();
+    this._world.step(this._collisionEventQueue);
+
+    this._collisionEventQueue.drainIntersectionEvents((one, two, started) => {
+      if (started) {
+        const parentHandle = 
+          this._world.getCollider(one).parent() ||
+          this._world.getCollider(two).parent();
+        if (parentHandle) {
+          const body = this._world.getRigidBody(parentHandle);
+          const keepHorizontalVel = body.linvel();
+          keepHorizontalVel.y = 0;
+          body.setLinvel(keepHorizontalVel, false);
+          body.applyImpulse({ x: 0, y: -2 }, true);
+        }
+      }
+    });
+
     this.takeSnapshot(frame);
     this.updateGameObjectsPosition();
   }
@@ -69,7 +88,6 @@ export class PhysicsWorld {
     
     this.restoreRigibodyReferences(this._players);
     this.restoreColliderReferences(this._movableColliders);
-    // this.restoreRigibodyReferences(this._bodies);
 
     // Free world at the end to not have the risk of losing current body.id
     // used to find new object references
@@ -155,6 +173,23 @@ export class PhysicsWorld {
 
     this._movableColliders.set(collider.handle, collider);
     this._movableObjs[collider.handle] = gameObject;
+
+    const halfSize = collider.halfExtents();
+    gameObject.size.x = halfSize.x * 2 * PHYSICS_SCALE;
+    gameObject.size.y = halfSize.y * 2 * PHYSICS_SCALE;
+
+    this.mutateColliderToGameObject(collider, gameObject);
+  }
+
+  addJumper(gameObject: GameObject, params: Position & Size) {
+    const collider = this._world.createCollider(
+      new RAPIER.ColliderDesc(new RAPIER.Cuboid(params.width/2, params.height/2))
+        .setTranslation(params.x, params.y)
+        .setActiveEvents(RAPIER.ActiveEvents.INTERSECTION_EVENTS)
+        .setSensor(true),
+    );
+
+    this._staticObjs[collider.handle] = gameObject;
 
     const halfSize = collider.halfExtents();
     gameObject.size.x = halfSize.x * 2 * PHYSICS_SCALE;
