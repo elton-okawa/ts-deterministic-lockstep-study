@@ -5,6 +5,7 @@ import { Ping } from "./scripts/Ping";
 import { InputManager } from "./scripts/InputManager";
 import { Input } from "./scripts/Input";
 import { DebugEventManager } from "./scripts/DebugEventManager";
+import { GameObject } from "./scripts/GameObject";
 
 const client = new Colyseus.Client('ws://localhost:2567');
 const localClientId = Date.now();
@@ -26,6 +27,7 @@ let currentInput: Input;
 let ownId: string;
 let inputManager: InputManager;
 let debugEventManager: DebugEventManager;
+const gameObjects: GameObject[] = [];
 
 let currentFrame: number;
 let estimatedServerFrame: number;
@@ -129,6 +131,7 @@ function connect() {
 
 function setup(id: string) {
   app = new Application(640, 360);
+  app.gameObjects = gameObjects;
 
   ownId = id;
   console.log(`OwnId: ${ownId}`);
@@ -152,11 +155,22 @@ function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
   app.tryRemoveWaitingForHost();
 
   world = new PhysicsWorld(ROLLBACK_WINDOW, debugEventManager);
+  createSceneObjects();
   inputManager = new InputManager(ownId, ROLLBACK_WINDOW, debugEventManager);
 
   playerInfos.forEach(player => {
-    world.addPlayer(player.id, player.position);
+    const playerObj = new GameObject();
+
+    world.addPlayer(playerObj, { 
+      id: player.id,
+      x: player.position.x,
+      y: player.position.y,
+      width: 0.5,
+      height: 0.5,
+    });
     inputManager.addPlayer(player.id);
+
+    gameObjects.push(playerObj);
   });
 
   currentState.players.forEach(player => {
@@ -185,6 +199,49 @@ function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
     handleKey(event.key, true));
   document.addEventListener('keyup', (event: KeyboardEvent) =>
     handleKey(event.key, false));
+}
+
+function createSceneObjects() {
+  const ground = new GameObject();
+  ground.sprite = './static/gray-block.png';
+  world.addSquareCollider(ground, { width: 6.4, height: 0.3, x: 3.2, y: 3.45});
+
+  const roof = new GameObject();
+  roof.sprite = './static/gray-block.png';
+  world.addSquareCollider(roof, { width: 6.4, height: 0.3, x: 3.2, y: 0.15});
+
+  const leftWall = new GameObject();
+  leftWall.sprite = './static/gray-block.png';
+  world.addSquareCollider(leftWall, { width: 0.3, height: 5.8, x: 0.15, y: 3.2});
+
+  const rightWall = new GameObject();
+  rightWall.sprite = './static/gray-block.png';
+  world.addSquareCollider(rightWall, { width: 0.3, height: 5.8, x: 6.25, y: 3.2});
+
+  const leftJumper = new GameObject();
+  leftJumper.sprite = './static/gray-block.png';
+  world.addJumper(leftJumper, { width: 1, height: 0.1, x: 1, y: 3.25});
+
+  const rightJumper = new GameObject();
+  rightJumper.sprite = './static/gray-block.png';
+  world.addJumper(rightJumper, { width: 1, height: 0.1, x: 5.5, y: 3.25});
+
+  const floatingPlatform = new GameObject();
+  floatingPlatform.sprite = './static/gray-block.png';
+  world.addRotationSquareBody(floatingPlatform, { width: 0.3, height: 2, x: 3.2, y: 1.5 });
+
+  const ballOne = new GameObject();
+  ballOne.sprite = './static/gray-circle.png';
+  world.addRoundBody(ballOne, { radius: 0.25, x: 3, y: 2 });
+
+  const ballTwo = new GameObject();
+  ballTwo.sprite = './static/gray-circle.png';
+  world.addRoundBody(ballTwo, { radius: 0.25, x: 5, y: 2 });
+
+  gameObjects.push(
+    ground, roof, leftWall, rightWall, leftJumper, rightJumper,
+    floatingPlatform, ballOne, ballTwo,
+  );
 }
 
 function handleKey(key: string, pressed: boolean) {
@@ -229,7 +286,6 @@ function update() {
     currentFrame += 1;
   }
 
-  app.gameObjects = [...world.staticInfo, ...world.bodyInfo];
   app.render();
   lastUpdate = now;
 

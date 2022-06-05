@@ -63,7 +63,7 @@ export class Application {
 
   private _ensureSprite(gameObject: GameObject) {
     if (!(gameObject.id in this._sprites)) {
-      const sprite = PIXI.Sprite.from('./static/happy-face.png');
+      const sprite = PIXI.Sprite.from(gameObject.sprite ?? './static/happy-face.png');
       sprite.anchor.set(0.5, 0.5);
       sprite.width = gameObject.size.x;
       sprite.height = gameObject.size.y;
