@@ -12,7 +12,6 @@ import { Vector } from './Vector';
 const PHYSICS_SCALE = 100;
 const FORCE_MULTIPLIER = 20;
 const MAX_HORIZONTAL_SPEED = 2;
-const PLAYER_SIZE = { x: 50, y: 50 };
 
 interface Position {
   x: number;
@@ -26,6 +25,10 @@ interface Size {
 
 interface Radius {
   radius: number;
+}
+
+interface Id {
+  id: string;
 }
 
 export class PhysicsWorld {
@@ -76,18 +79,22 @@ export class PhysicsWorld {
     oldWorldRef.free();
   }
 
-  addPlayer(id: string, position: Vector) {
+  addPlayer(gameObject: GameObject, params: Id & Position & Size) {
     const bodyDesc = RAPIER.RigidBodyDesc.newDynamic()
-      .setTranslation(position.x / PHYSICS_SCALE, position.y / PHYSICS_SCALE);
+      .setTranslation(params.x, params.y);
     const body = this._world.createRigidBody(bodyDesc);
 
     const colliderDesc = RAPIER.ColliderDesc
-      .cuboid(PLAYER_SIZE.x / (PHYSICS_SCALE * 2), PLAYER_SIZE.y / (PHYSICS_SCALE * 2));
+      .cuboid(params.width / 2, params.height / 2);
     const collider = this._world.createCollider(colliderDesc, body.handle);
 
-    this._players.set(id, body);
+    this._players.set(params.id, body);
     this._bodies.set(body.handle, body);
-    this._bodyObjs[collider.handle] = new GameObject();
+    this._bodyObjs[collider.handle] = gameObject;
+
+    const halfSize = collider.halfExtents();
+    gameObject.size.x = halfSize.x * 2 * PHYSICS_SCALE;
+    gameObject.size.y = halfSize.y * 2 * PHYSICS_SCALE;
     this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
   }
 

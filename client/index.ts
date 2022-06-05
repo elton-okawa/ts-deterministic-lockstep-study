@@ -158,8 +158,18 @@ function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
   inputManager = new InputManager(ownId, ROLLBACK_WINDOW, debugEventManager);
 
   playerInfos.forEach(player => {
-    world.addPlayer(player.id, player.position);
+    const playerObj = new GameObject();
+
+    world.addPlayer(playerObj, { 
+      id: player.id,
+      x: player.position.x,
+      y: player.position.y,
+      width: 0.5,
+      height: 0.5,
+    });
     inputManager.addPlayer(player.id);
+
+    gameObjects.push(playerObj);
   });
 
   currentState.players.forEach(player => {

@@ -36,7 +36,7 @@ export class GameRoom extends Room<GameRoomState> {
   private timeSinceLastUpdate: number = 0;
   private ownerId: number;
   private started = false;
-  private spawnPointX = 100;
+  private spawnPointX = 1;
   private spawnPoints: { [key: string]: PlayerInfo } = {};
 
   private estimatedClientsFrame = 0;
@@ -59,9 +59,9 @@ export class GameRoom extends Room<GameRoomState> {
     this.inputFrameManager.addPlayer(client.id);
     this.spawnPoints[client.id] = {
       id: client.id,
-      position: { x: this.spawnPointX, y: 50 },
+      position: { x: this.spawnPointX, y: 0.5 },
     }
-    this.spawnPointX += 100;
+    this.spawnPointX += 1;
   }
 
   onLeave (client: Client, consented: boolean) {
