@@ -17,11 +17,10 @@ const PLAYER_SIZE = { x: 50, y: 50 };
 export class PhysicsWorld {
 
   private _world: RAPIER.World;
-  private _static: RAPIER.Collider[] = [];
   private _bodies = new Map<number, RAPIER.RigidBody>();
   private _players = new Map<string, RAPIER.RigidBody>();
 
-  private _staticObjs: { [key: string]: GameObject } = {};
+  private _static: { [key: string]: GameObject } = {};
   private _bodyObjs: { [key: string]: GameObject } = {};
   private _rapierSnapshots: any[];
   private _debugEventManager: DebugEventManager;
@@ -37,10 +36,6 @@ export class PhysicsWorld {
     this.init();
   }
 
-  get staticInfo(): GameObject[] {
-    return Object.values(this._staticObjs);
-  }
-
   get bodyInfo(): GameObject[] {
     for (const body of this._bodies.values()) {
       // all bodies has a single collider
@@ -52,7 +47,6 @@ export class PhysicsWorld {
   }
 
   init() {
-    this.setupWalls();
     const rigidBody = this._world.createRigidBody(
       RAPIER.RigidBodyDesc.newDynamic().setTranslation(3.0, 2.0)
     );
@@ -78,7 +72,6 @@ export class PhysicsWorld {
     
     this.restoreRigibodyReferences(this._players);
     this.restoreRigibodyReferences(this._bodies);
-    this.restoreStaticReferences();
 
     // Free world at the end to not have the risk of losing current body.id
     // used to find new object references
@@ -121,8 +114,8 @@ export class PhysicsWorld {
       new RAPIER.ColliderDesc(new RAPIER.Cuboid(width/2, height/2)).setTranslation(x, y),
     );
 
-    this._staticObjs[collider.handle] = gameObject;
-    this.mutateColliderToGameObject(collider, this._staticObjs[collider.handle]);
+    this._static[collider.handle] = gameObject;
+    this.mutateColliderToGameObject(collider, this._static[collider.handle]);
   }
 
   private limitVelocity(vel: RAPIER.Vector) {
@@ -150,31 +143,6 @@ export class PhysicsWorld {
     return { x: x * FORCE_MULTIPLIER, y: y * FORCE_MULTIPLIER };
   }
 
-  private setupWalls() {
-    // Create the ground
-    // const ground = this._world.createCollider(
-    //   new RAPIER.ColliderDesc(new RAPIER.Cuboid(2.5, 0.3)).setTranslation(2.5, 3.3)
-    // );
-    const roof = this._world.createCollider(
-      new RAPIER.ColliderDesc(new RAPIER.Cuboid(1, 0.3)).setTranslation(3, 0.3),
-    );
-
-    const leftWall = this._world.createCollider(
-      new RAPIER.ColliderDesc(new RAPIER.Cuboid(0.3, 4)).setTranslation(0.3, 2),
-    );
-    const rightWall = this._world.createCollider(
-      new RAPIER.ColliderDesc(new RAPIER.Cuboid(0.3, 4)).setTranslation(5.7, 2),
-    );
-
-    // this._static.push(ground, leftWall, rightWall, roof);
-    this._static.push(leftWall, rightWall, roof);
-
-    this._static.forEach(st => {
-      this._staticObjs[st.handle] = new GameObject();
-      this.mutateColliderToGameObject(st, this._staticObjs[st.handle]);
-    });
-  }
-
   private mutateColliderToGameObject(collider: RAPIER.Collider, target: GameObject) {
     const pos = collider.translation();
     const halfSize = collider.halfExtents();
@@ -195,13 +163,6 @@ export class PhysicsWorld {
     for (let key of bodies.keys()) {
       const newBody = this._world.getRigidBody(bodies.get(key).handle);
       bodies.set(key, newBody);
-    }
-  }
-
-  private restoreStaticReferences() {
-    for (let i = 0; i < this._static.length; i++) {
-      const oldCollider = this._static[i];
-      this._static[i] = this._world.getCollider(oldCollider.handle);
     }
   }
 }

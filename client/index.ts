@@ -27,6 +27,7 @@ let currentInput: Input;
 let ownId: string;
 let inputManager: InputManager;
 let debugEventManager: DebugEventManager;
+const gameObjects: GameObject[] = [];
 
 let currentFrame: number;
 let estimatedServerFrame: number;
@@ -192,8 +193,21 @@ function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
 function createSceneObjects() {
   const ground = new GameObject();
   ground.sprite = './static/gray-block.png';
-
   world.addSquareCollider(ground, { width: 5, height: 0.6, x: 2.5, y: 3.3});
+
+  const roof = new GameObject();
+  roof.sprite = './static/gray-block.png';
+  world.addSquareCollider(roof, { width: 2, height: 0.6, x: 3, y: 0.3});
+
+  const leftWall = new GameObject();
+  leftWall.sprite = './static/gray-block.png';
+  world.addSquareCollider(leftWall, { width: 0.6, height: 8, x: 0.3, y: 2});
+
+  const rightWall = new GameObject();
+  rightWall.sprite = './static/gray-block.png';
+  world.addSquareCollider(rightWall, { width: 0.6, height: 8, x: 5.7, y: 2});
+
+  gameObjects.push(ground, roof, leftWall, rightWall);
 }
 
 function handleKey(key: string, pressed: boolean) {
@@ -238,7 +252,7 @@ function update() {
     currentFrame += 1;
   }
 
-  app.gameObjects = [...world.staticInfo, ...world.bodyInfo];
+  app.gameObjects = [...gameObjects, ...world.bodyInfo];
   app.render();
   lastUpdate = now;
 
