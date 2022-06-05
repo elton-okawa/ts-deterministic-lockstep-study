@@ -207,6 +207,10 @@ function createSceneObjects() {
   rightWall.sprite = './static/gray-block.png';
   world.addSquareCollider(rightWall, { width: 0.6, height: 8, x: 5.7, y: 2});
 
+  const ball = new GameObject();
+  ball.sprite = './static/gray-circle.png';
+  world.addRoundBody(ball, { radius: 0.25, x: 3, y: 2 });
+
   gameObjects.push(ground, roof, leftWall, rightWall);
 }
 

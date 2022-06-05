@@ -14,6 +14,20 @@ const FORCE_MULTIPLIER = 20;
 const MAX_HORIZONTAL_SPEED = 2;
 const PLAYER_SIZE = { x: 50, y: 50 };
 
+interface Position {
+  x: number;
+  y: number;
+}
+
+interface Size {
+  width: number;
+  height: number;
+}
+
+interface Radius {
+  radius: number;
+}
+
 export class PhysicsWorld {
 
   private _world: RAPIER.World;
@@ -32,8 +46,6 @@ export class PhysicsWorld {
     this._world = new RAPIER.World(gravity);
     this._rapierSnapshots = Array.from({length: snapshotSize});
     this._debugEventManager = debugEventManager;
-
-    this.init();
   }
 
   get bodyInfo(): GameObject[] {
@@ -44,20 +56,6 @@ export class PhysicsWorld {
     }
 
     return Object.values(this._bodyObjs);
-  }
-
-  init() {
-    const rigidBody = this._world.createRigidBody(
-      RAPIER.RigidBodyDesc.newDynamic().setTranslation(3.0, 2.0)
-    );
-
-    // Create a cuboid collider attached to the dynamic rigidBody.
-    const colliderDesc = RAPIER.ColliderDesc.cuboid(0.25, 0.25);
-    const collider = this._world.createCollider(colliderDesc, rigidBody.handle);
-
-    this._bodies.set(rigidBody.handle, rigidBody);
-    this._bodyObjs[collider.handle] = new GameObject();
-    this.mutateColliderToGameObject(collider, this._bodyObjs[collider.handle]);
   }
 
   update(frame: number) {
@@ -109,13 +107,33 @@ export class PhysicsWorld {
     player.applyForce(this.inputToVector(input), true);
   }
 
-  addSquareCollider(gameObject: GameObject, { width, height, x, y }: { width: number, height: number, x: number, y: number}) {
+  addSquareCollider(gameObject: GameObject, params: Position & Size) {
     const collider = this._world.createCollider(
-      new RAPIER.ColliderDesc(new RAPIER.Cuboid(width/2, height/2)).setTranslation(x, y),
+      new RAPIER.ColliderDesc(new RAPIER.Cuboid(params.width/2, params.height/2)).setTranslation(params.x, params.y),
     );
 
     this._static[collider.handle] = gameObject;
-    this.mutateColliderToGameObject(collider, this._static[collider.handle]);
+
+    const halfSize = collider.halfExtents();
+    gameObject.size.x = halfSize.x * 2 * PHYSICS_SCALE;
+    gameObject.size.y = halfSize.y * 2 * PHYSICS_SCALE;
+
+    this.mutateColliderToGameObject(collider, gameObject);
+  }
+
+  addRoundBody(gameObject: GameObject, params: Position & Radius) {
+    const rigidBody = this._world.createRigidBody(
+      RAPIER.RigidBodyDesc.newDynamic().setTranslation(params.x, params.y)
+    );
+
+    const colliderDesc = RAPIER.ColliderDesc.ball(params.radius);
+    const collider = this._world.createCollider(colliderDesc, rigidBody.handle);
+
+    this._bodies.set(rigidBody.handle, rigidBody);
+    this._bodyObjs[collider.handle] = gameObject;
+
+    const radius = collider.radius();
+    gameObject.radius = radius * PHYSICS_SCALE;
   }
 
   private limitVelocity(vel: RAPIER.Vector) {
@@ -151,8 +169,12 @@ export class PhysicsWorld {
     target.position.x = pos.x * PHYSICS_SCALE;
     target.position.y = pos.y * PHYSICS_SCALE;
     target.rotation = collider.rotation();
-    target.size.x = halfSize.x * 2 * PHYSICS_SCALE;
-    target.size.y = halfSize.y * 2 * PHYSICS_SCALE;
+
+    // FIX we should only update position and rotation
+    if (halfSize) {
+      target.size.x = halfSize.x * 2 * PHYSICS_SCALE;
+      target.size.y = halfSize.y * 2 * PHYSICS_SCALE;
+    }
   }
 
   private takeSnapshot(frame: number) {
