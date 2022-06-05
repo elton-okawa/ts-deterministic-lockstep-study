@@ -204,19 +204,19 @@ function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
 function createSceneObjects() {
   const ground = new GameObject();
   ground.sprite = './static/gray-block.png';
-  world.addSquareCollider(ground, { width: 5, height: 0.6, x: 2.5, y: 3.3});
+  world.addSquareCollider(ground, { width: 6.4, height: 0.3, x: 3.2, y: 3.45});
 
   const roof = new GameObject();
   roof.sprite = './static/gray-block.png';
-  world.addSquareCollider(roof, { width: 2, height: 0.6, x: 3, y: 0.3});
+  world.addSquareCollider(roof, { width: 6.4, height: 0.3, x: 3.2, y: 0.15});
 
   const leftWall = new GameObject();
   leftWall.sprite = './static/gray-block.png';
-  world.addSquareCollider(leftWall, { width: 0.6, height: 8, x: 0.3, y: 2});
+  world.addSquareCollider(leftWall, { width: 0.3, height: 5.8, x: 0.15, y: 3.2});
 
   const rightWall = new GameObject();
   rightWall.sprite = './static/gray-block.png';
-  world.addSquareCollider(rightWall, { width: 0.6, height: 8, x: 5.7, y: 2});
+  world.addSquareCollider(rightWall, { width: 0.3, height: 5.8, x: 6.25, y: 3.2});
 
   const ball = new GameObject();
   ball.sprite = './static/gray-circle.png';
