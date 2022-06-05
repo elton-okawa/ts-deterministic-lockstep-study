@@ -143,6 +143,26 @@ export class PhysicsWorld {
     this.mutateColliderToGameObject(collider, gameObject);
   }
 
+  addRotationSquareBody(gameObject: GameObject, params: Position & Size) {
+    const rigidBody = this._world.createRigidBody(
+      RAPIER.RigidBodyDesc.newDynamic()
+        .setTranslation(params.x, params.y)
+        .lockTranslations(),
+    );
+
+    const colliderDesc = RAPIER.ColliderDesc.cuboid(params.width/2, params.height/2);
+    const collider = this._world.createCollider(colliderDesc, rigidBody.handle);
+
+    this._movableColliders.set(collider.handle, collider);
+    this._movableObjs[collider.handle] = gameObject;
+
+    const halfSize = collider.halfExtents();
+    gameObject.size.x = halfSize.x * 2 * PHYSICS_SCALE;
+    gameObject.size.y = halfSize.y * 2 * PHYSICS_SCALE;
+
+    this.mutateColliderToGameObject(collider, gameObject);
+  }
+
   private limitVelocity(vel: RAPIER.Vector) {
     const signX = vel.x > 0 ? 1 : -1;
     // const signY = vel.y > 0 ? 1 : -1;

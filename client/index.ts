@@ -218,11 +218,19 @@ function createSceneObjects() {
   rightWall.sprite = './static/gray-block.png';
   world.addSquareCollider(rightWall, { width: 0.3, height: 5.8, x: 6.25, y: 3.2});
 
-  const ball = new GameObject();
-  ball.sprite = './static/gray-circle.png';
-  world.addRoundBody(ball, { radius: 0.25, x: 3, y: 2 });
+  const floatingPlatform = new GameObject();
+  floatingPlatform.sprite = './static/gray-block.png';
+  world.addRotationSquareBody(floatingPlatform, { width: 0.3, height: 2, x: 3.2, y: 1.5 });
 
-  gameObjects.push(ground, roof, leftWall, rightWall, ball);
+  const ballOne = new GameObject();
+  ballOne.sprite = './static/gray-circle.png';
+  world.addRoundBody(ballOne, { radius: 0.25, x: 3, y: 2 });
+
+  const ballTwo = new GameObject();
+  ballTwo.sprite = './static/gray-circle.png';
+  world.addRoundBody(ballTwo, { radius: 0.25, x: 4, y: 2 });
+
+  gameObjects.push(ground, roof, leftWall, rightWall, floatingPlatform, ballOne, ballTwo);
 }
 
 function handleKey(key: string, pressed: boolean) {
