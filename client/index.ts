@@ -131,6 +131,7 @@ function connect() {
 
 function setup(id: string) {
   app = new Application(640, 360);
+  app.gameObjects = gameObjects;
 
   ownId = id;
   console.log(`OwnId: ${ownId}`);
@@ -221,7 +222,7 @@ function createSceneObjects() {
   ball.sprite = './static/gray-circle.png';
   world.addRoundBody(ball, { radius: 0.25, x: 3, y: 2 });
 
-  gameObjects.push(ground, roof, leftWall, rightWall);
+  gameObjects.push(ground, roof, leftWall, rightWall, ball);
 }
 
 function handleKey(key: string, pressed: boolean) {
@@ -266,7 +267,6 @@ function update() {
     currentFrame += 1;
   }
 
-  app.gameObjects = [...gameObjects, ...world.bodyInfo];
   app.render();
   lastUpdate = now;
 
