@@ -10,7 +10,7 @@ import { GameObject } from "./scripts/GameObject";
 const client = new Colyseus.Client('ws://localhost:2567');
 const localClientId = Date.now();
 
-let room: Colyseus.Room;
+let room: Colyseus.Room<GameRoomState>;
 
 const FIXED_DELTA = 33.33;
 const FRAME_FREQUENCY = 1 / FIXED_DELTA;
@@ -68,13 +68,16 @@ function handleDownloadClick(filename: string, lines: string[]) {
   document.body.removeChild(element);
 }
 
-function setupHtml() {
-  const downloadButton = document.getElementById('debug_download_button');
-  downloadButton.addEventListener('click', () => {
+function setupDownloadButton() {
+  const button = document.createElement('button');
+  button.innerText = 'Download debug log';
+  button.addEventListener('click', () => {
     const { filename, lines } = debugEventManager.text;
     console.log(`Exporting: ${lines.length} lines`);
     handleDownloadClick(filename, lines);
   });
+
+  document.body.appendChild(button);
 }
 
 function connect() {
@@ -101,15 +104,11 @@ function connect() {
       started = true;
     });
 
-    // TODO perform static sync using gameRoom.state
-    gameRoom.onStateChange(state => {
-      // TODO compare state to rollback
-      // console.log(`Inputs: ${state.players.get(ownId).inputBuffer.inputs.map((input) => input.frame)}`)
-      currentState = state;
-      const halfRTT = ping.ping / 2;
-      estimatedServerFrame = state.frame + halfRTT * FRAME_FREQUENCY
-      app.frameDiff = currentFrame - estimatedServerFrame;
-      // console.log(`frame: ${frame}, stateFrame: ${state.frame}, framesAhead: ${framesAhead}`);
+    gameRoom.onStateChange.once(firstState => {
+      console.log('First state received');
+      currentState = firstState;
+
+      setup(room.sessionId, firstState.env);
     });
 
     gameRoom.onError((code: number, message: string) => {
@@ -122,21 +121,33 @@ function connect() {
       clearInterval(updateTimeout);
     });
 
-    setup(gameRoom.sessionId);
     room.send('checkOwnership', { localClientId });
   }).catch(e => {
       console.log('JOIN ERROR', e);
   });
 }
 
-function setup(id: string) {
+function setup(id: string, env: string) {
+  console.log(`Setup: ownId '${id}', env '${env}'`);
+
+  const isDev = env === 'development';
   app = new Application(640, 360);
   app.gameObjects = gameObjects;
 
   ownId = id;
-  console.log(`OwnId: ${ownId}`);
   currentFrame = 0;
-  debugEventManager = new DebugEventManager(id);
+  debugEventManager = new DebugEventManager(id, isDev);
+
+  if (isDev) {
+    setupDownloadButton();
+  }
+
+  room.onStateChange(state => {
+    currentState = state;
+    const halfRTT = ping.ping / 2;
+    estimatedServerFrame = state.frame + halfRTT * FRAME_FREQUENCY
+    app.frameDiff = currentFrame - estimatedServerFrame;
+  });
 
   ping = new Ping(() => {
     room.send('ping');
@@ -337,5 +348,4 @@ function simulatePhysicsFrame(frame: number) {
   world.update(frame + 1);
 }
 
-setupHtml();
 connect();
