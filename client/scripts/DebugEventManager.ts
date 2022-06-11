@@ -22,9 +22,11 @@ interface Event {
 export class DebugEventManager {
   private ownId: string;
   private events: Event[] = [];
+  private enabled: boolean;
 
-  constructor(playerId: string) {
+  constructor(playerId: string, enabled: boolean) {
     this.ownId = playerId;
+    this.enabled = enabled;
   }
 
   // TODO json output if needed
@@ -37,7 +39,9 @@ export class DebugEventManager {
   }  
 
   private addEvent(event: Event) {
-    this.events.push(event);
+    if (this.enabled) {
+      this.events.push(event);
+    }
   }
 
   input(playerId: string, origin: InputOrigin, input: any) {

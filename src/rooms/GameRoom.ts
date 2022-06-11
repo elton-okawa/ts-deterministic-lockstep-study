@@ -44,7 +44,7 @@ export class GameRoom extends Room<GameRoomState> {
 
   onCreate (options: ClientOptions) {
     this.world = new PhysicsWorld();
-    this.setState(new GameRoomState(0));
+    this.setState(new GameRoomState(0, process.env.NODE_ENV));
     this.setSimulationInterval((delta) => this.update(delta), TICK);
     this.setPatchRate(TICK);
     this.setupMessageHandlers();
