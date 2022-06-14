@@ -26,6 +26,8 @@ yarn watch
 ```
 Note that after changing client code it'll take a while to transpile and you'll need to reload the html page.
 
+Open `localhost:2567/client` with a single or more browser windows to play
+
 ## Credits
 
 - Font: `Kenney Future` from [Kenney Fonts](https://www.kenney.nl/assets/kenney-fonts) by [Kenney](https://www.kenney.nl/) under license [Creative Commons Zero, CC0](https://creativecommons.org/publicdomain/zero/1.0/). Note: original file `.ttf` has been converted to `.png` and `.xml` for library compatibility
