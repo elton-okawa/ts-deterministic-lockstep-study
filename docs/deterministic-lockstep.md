@@ -40,9 +40,15 @@ The client loop can be summarized to, considering current frame as X
 There are the following scenarios:
 1. All authoritative inputs of frame X arrived before client simulates it. Nothing to be done here, the simulation is synchronized.
 2. Some inputs were predicted because they didn't arrive in time, but **the prediction was correct**. also nothing to be done here, the simulation is synchronized.
-3. Some inputs were predicted because they didn't arrive in time, but **the prediction was incorrect**. The simulation is desynched, considering that we are at frame X and the incorrect prediction occurred at frame Y, we need to restore the state at frame Y and reapply all inputs to reach the current frame X (`rollback`)
+3. Some inputs were predicted because they didn't arrive in time, but **the prediction was incorrect**. The simulation is desynched, considering that we are at frame X and the incorrect prediction occurred at frame Y, we need to restore the state at frame Y and reapply all inputs from Y to X to reach the current frame X (`rollback`)
 
 Important notes
 - Own input is considered predicted because we didn't confirmed that server received in time
 
 ## Server
+
+Server advance one frame only if it has inputs from all clients from that frame. This could harm the entire gameplay because a single disconnected/lagged client would block the server.
+
+That's why the server also estimates clients frame in order to force confirmation of inputs that goes outside of the rollback window and ignore actual ones when they arrive.
+
+For now, the server does not simulate the game state but it'd be a interesting feature to add in an attempt to keep clients synched, they'd receive a hashed state to compare if there is a simulation difference.
