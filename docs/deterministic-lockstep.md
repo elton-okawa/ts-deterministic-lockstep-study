@@ -26,7 +26,9 @@ TODO server and clients start at the same time and perform a fixed update
 
 ## Client
 
-The client loop can be summarized to, considering current frame as X
+Clients store **inputs** and **states** in a ring buffer of size 2x the rollback window to avoid excessive memory allocation and have enough space from current client frame and last input from rollback window.
+
+The loop can be summarized to, considering current frame as X
 - Get current input
 - Set own input as predicted to be executed at X+3 (`static delay`)
 - Send input from frame X
@@ -46,6 +48,8 @@ Important notes
 - Own input is considered predicted because we didn't confirmed that server received in time
 
 ## Server
+
+Server stores clients input in a ring buffer in order to avoid excessive memory allocation.
 
 Server advance one frame only if it has inputs from all clients from that frame. This could harm the entire gameplay because a single disconnected/lagged client would block the server.
 
