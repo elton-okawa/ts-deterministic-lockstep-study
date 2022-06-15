@@ -20,9 +20,19 @@ The state follows the formula:
 
 You can read the formula as **applying input of frame t in the state t we acquire state t+1**
 
-TODO Ringbuffer input and state
+`Synchronized start` and `fixed update` allow all clients to roughly simulate the same frame at the same time.
 
-TODO server and clients start at the same time and perform a fixed update
+### Synchronized start
+
+Starting the game, server sends a message telling clients to start after X miliseconds. After received, clients uses the ping to estimated how much time elapsed since the message was sent and schedules to start after this time.
+
+We do not rely on specific date time because a device with a misconfigured time would not start or start too late/early.
+
+### Fixed update
+
+Clients and server performs a fixed update that consist of measuring time elapsed since last update and performs X numbers of simulation steps that fit in that time.
+
+This behavior allows a client to catch up current frame after a cpu stutter.
 
 ## Client
 
