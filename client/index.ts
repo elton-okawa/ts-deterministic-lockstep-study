@@ -149,6 +149,16 @@ function setup(id: string, env: string) {
     app.frameDiff = currentFrame - estimatedServerFrame;
   });
 
+  // FIX we must receive the frame that the player has been removed
+  // to remove it from the world at the correct frame when a rollback
+  // is performed
+  room.state.players.onRemove = (player) => {
+    world.removePlayer(player.id);
+    inputManager.removePlayer(player.id);
+    gameObjects.splice(gameObjects.findIndex((go) => go.id === player.id), 1);
+    app.removeGameObject(player.id);
+  };
+
   ping = new Ping(() => {
     room.send('ping');
   });
@@ -171,6 +181,7 @@ function start(shouldStartInMs: number, playerInfos: PlayerInfo[]) {
 
   playerInfos.forEach(player => {
     const playerObj = new GameObject();
+    playerObj.id = player.id;
 
     world.addPlayer(playerObj, { 
       id: player.id,

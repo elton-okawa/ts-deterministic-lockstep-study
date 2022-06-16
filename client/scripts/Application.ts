@@ -147,6 +147,12 @@ export class Application {
     }
   }
 
+  removeGameObject(id: string) {
+    const sprite = this._sprites[id];
+    delete this._sprites[id];
+    this._app.stage.removeChild(sprite);
+  }
+
   render() {
     this._gameObjects.forEach(obj => this._renderGameObject(obj));
   }

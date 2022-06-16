@@ -114,9 +114,14 @@ export class PhysicsWorld {
     this.mutateColliderToGameObject(collider, this._movableObjs[collider.handle]);
   }
 
+  // FIX if we rollback, the player will be recreated
   removePlayer(id: string) {
-    // remove from this._players
-    // remove from this._bodies
+    const body = this._players.get(id);
+    this._players.delete(id);
+
+    const colliderHandle = body.collider(0);
+    this._movableColliders.delete(colliderHandle);
+    delete this._movableObjs[colliderHandle];
   }
 
   hasPlayer(id: string): boolean {
@@ -225,9 +230,7 @@ export class PhysicsWorld {
 
   private mutateColliderToGameObject(collider: RAPIER.Collider, target: GameObject) {
     const pos = collider.translation();
-    // const halfSize = collider.halfExtents();
 
-    target.id = collider.handle;
     target.position.x = pos.x * PHYSICS_SCALE;
     target.position.y = pos.y * PHYSICS_SCALE;
     target.rotation = collider.rotation();
