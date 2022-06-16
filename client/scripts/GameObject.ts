@@ -2,14 +2,14 @@ import { InputBuffer } from "./InputBuffer";
 import { Vector } from "./Vector";
 
 export class GameObject {
-  id: number;
+  id: string;
   position: Vector;
   rotation: number;
   size: Vector;
   sprite: string;
 
   constructor() {
-    this.id = 0;
+    this.id = _.uniqueId();
     this.position = { x: 0, y: 0 };
     this.rotation = 0;
     this.size = { x: 0, y: 0 };
